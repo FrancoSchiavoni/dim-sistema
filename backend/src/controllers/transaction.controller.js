@@ -130,34 +130,43 @@ const getDashboardMetrics = async (req, res, next) => {
 
 
         // Separamos las consultas para aislar errores
+        // Separamos las consultas para aislar errores (Ajustadas para PostgreSQL estricto)
         const queries = {
             ingresosCuenta: `
                 SELECT COALESCE(c.nombre, 'Sin Asignar') as label, SUM(i.importe) as total 
                 FROM ingresos i 
                 LEFT JOIN cuentas c ON i.cuenta_id = c.id 
                 WHERE i.fecha >= ? AND i.fecha <= ? 
-                GROUP BY label HAVING total > 0 ORDER BY total DESC
+                GROUP BY COALESCE(c.nombre, 'Sin Asignar') 
+                HAVING SUM(i.importe) > 0 
+                ORDER BY total DESC
             `,
             ingresosMetodo: `
                 SELECT COALESCE(m.nombre, 'Sin Asignar') as label, SUM(i.importe) as total 
                 FROM ingresos i 
                 LEFT JOIN metodosPago m ON i.metodoPago_id = m.id 
                 WHERE i.fecha >= ? AND i.fecha <= ? 
-                GROUP BY label HAVING total > 0 ORDER BY total DESC
+                GROUP BY COALESCE(m.nombre, 'Sin Asignar') 
+                HAVING SUM(i.importe) > 0 
+                ORDER BY total DESC
             `,
             egresosOrigen: `
                 SELECT COALESCE(o.nombre, 'Sin Asignar') as label, SUM(e.importe) as total 
                 FROM egresos e 
                 LEFT JOIN origenes o ON e.origen_id = o.id 
                 WHERE e.fecha >= ? AND e.fecha <= ? 
-                GROUP BY label HAVING total > 0 ORDER BY total DESC
+                GROUP BY COALESCE(o.nombre, 'Sin Asignar') 
+                HAVING SUM(e.importe) > 0 
+                ORDER BY total DESC
             `,
             egresosMetodo: `
                 SELECT COALESCE(m.nombre, 'Sin Asignar') as label, SUM(e.importe) as total 
                 FROM egresos e 
                 LEFT JOIN metodosPago m ON e.metodoPago_id = m.id 
                 WHERE e.fecha >= ? AND e.fecha <= ? 
-                GROUP BY label HAVING total > 0 ORDER BY total DESC
+                GROUP BY COALESCE(m.nombre, 'Sin Asignar') 
+                HAVING SUM(e.importe) > 0 
+                ORDER BY total DESC
             `
         };
 
