@@ -140,6 +140,7 @@ export default function Movimientos() {
                         </div>
 
                         {tipo === 'ingreso' && (
+                            <>
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-8 animate-fade-in">
                                 <div>
                                     <label className="text-xs md:text-base font-bold text-slate-700 mb-1 md:mb-2 block">Cliente o Empresa</label>
@@ -164,6 +165,18 @@ export default function Movimientos() {
                                 </div>
 
                             </div>
+
+                            <div className="lg:col-span-3 flex flex-col sm:flex-row items-center gap-3 md:gap-4 p-4 md:p-6 bg-gradient-to-r from-sky-50 to-blue-50 border-2 border-sky-200 rounded-lg md:rounded-2xl">
+                                <div className="flex-1">
+                                    <h3 className="text-base md:text-lg font-bold text-sky-900 mb-1">Una forma más rápida</h3>
+                                    <p className="text-xs md:text-sm text-sky-700">Envía la captura de transferencia a nuestro bot de Telegram y registra el ingreso automáticamente</p>
+                                </div>
+                                <a href="https://t.me/dim_comprobantes_bot" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 md:px-8 py-2.5 md:py-3 bg-sky-500 hover:bg-sky-600 text-white font-bold text-sm md:text-base rounded-lg md:rounded-xl transition-all shadow-lg shadow-sky-500/30 hover:shadow-sky-500/40 active:scale-95">
+                                    <span className="material-symbols-outlined text-[18px] md:text-[20px]">send</span>
+                                    <span>Abrir Telegram</span>
+                                </a>
+                            </div>
+                            </>
                         )}
 
                         {tipo === 'egreso' && (

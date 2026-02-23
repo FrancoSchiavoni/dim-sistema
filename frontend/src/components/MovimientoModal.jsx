@@ -196,6 +196,7 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
                     </div>
 
                     {tipo === 'ingreso' && (
+                        <>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-8 animate-fade-in">
                             <div>
                                 <label className="text-xs md:text-base font-bold text-slate-700 mb-1 md:mb-2 block">Cliente o Empresa</label>
@@ -219,6 +220,18 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
                                 </select>
                             </div>
                         </div>
+
+                        <div className="lg:col-span-3 flex flex-col sm:flex-row items-center gap-2 md:gap-3 p-3 md:p-4 bg-gradient-to-r from-sky-50 to-blue-50 border-2 border-sky-200 rounded-lg md:rounded-xl">
+                            <div className="flex-1">
+                                <h3 className="text-sm md:text-base font-bold text-sky-900 mb-0.5">Una forma más rápida</h3>
+                                <p className="text-xs text-sky-700">Envía la captura de transferencia a nuestro bot de Telegram</p>
+                            </div>
+                            <a href="https://t.me/dim_comprobantes_bot" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 md:px-6 py-2 md:py-2.5 bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs md:text-sm rounded-lg md:rounded-lg transition-all shadow-lg shadow-sky-500/30 hover:shadow-sky-500/40 active:scale-95 whitespace-nowrap">
+                                <span className="material-symbols-outlined text-[16px] md:text-[18px]">send</span>
+                                <span>Telegram</span>
+                            </a>
+                        </div>
+                        </>
                     )}
 
                     {tipo === 'egreso' && (
