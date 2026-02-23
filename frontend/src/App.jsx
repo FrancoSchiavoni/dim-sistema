@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 // Agrega esta importación arriba
 import Transacciones from './pages/Transacciones';
 import Dashboard from './pages/Dashboard'; // ¡Nuevo!
+import Movimientos from './pages/Movimientos';
 // Y modifica la ruta correspondiente para que quede así:
 
 
@@ -26,6 +27,7 @@ function App() {
                 <Route path="/" element={<Login />} />
                 <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
                 <Route path="/dashboard" element={<PrivateRoute><DashboardPlaceholder /></PrivateRoute>} />
+                <Route path="/movimientos" element={<PrivateRoute><Movimientos /></PrivateRoute>} />
                 <Route path="/transacciones" element={<PrivateRoute><Transacciones /></PrivateRoute>} />
             </Routes>
         </Router>

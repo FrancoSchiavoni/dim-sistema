@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 
 const getTodayDate = () => {
@@ -15,6 +15,7 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
     const [tipo, setTipo] = useState('ingreso');
     const [importe, setImporte] = useState('');
     const [fecha, setFecha] = useState(getTodayDate());
+    const importeRef = useRef(null);
     const [loading, setLoading] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [catalogos, setCatalogos] = useState({ cuentas: [], origenes: [], metodosPago: [] });
@@ -34,7 +35,7 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
             // Si estamos editando, rellenamos los campos
             if (movimientoAEditar) {
                 setTipo(movimientoAEditar.tipo);
-                setImporte(movimientoAEditar.monto);
+                setImporte(formatCurrencyInput(movimientoAEditar.monto));
                 setFecha(movimientoAEditar.fecha);
                 setMetodoPagoId(movimientoAEditar.metodoPago_id || '');
                 
@@ -58,6 +59,55 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
         setCliente(''); setCuentaId(''); setDetalle(''); setOrigenId(''); setMetodoPagoId('');
     };
 
+    const formatCurrencyInput = (value) => {
+        if (value === null || value === undefined || value === '') return '';
+        // Accept numbers or strings; normalize then format for es-AR
+        const num = typeof value === 'number' ? value : Number(String(value).replace(/\./g, '').replace(/,/g, '.'));
+        if (isNaN(num)) return '';
+        return new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+    };
+
+    const parseCurrencyToNumber = (str) => {
+        if (str === null || str === undefined || str === '') return NaN;
+        if (typeof str === 'number') return str;
+        const normalized = String(str).replace(/\./g, '').replace(/,/g, '.');
+        return parseFloat(normalized);
+    };
+
+    const unformatCurrency = (str) => {
+        if (!str && str !== 0) return '';
+        // Remove thousand separators and normalize decimal to dot for editing
+        return String(str).replace(/\./g, '').replace(/,/g, '.');
+    };
+
+    const handleImporteChange = (e) => {
+        const raw = e.target.value;
+        // Extract pure input: keep only digits and comma (comma is decimal separator)
+        const digitsOnly = raw.replace(/[^0-9,]/g, '');
+        const hasDecimal = digitsOnly.includes(',');
+        // Allow only one comma (decimal separator)
+        const parts = digitsOnly.split(',');
+        let integerPart = parts[0] || '';
+        let decimalPart = parts[1] ? parts[1].slice(0, 2) : ''; // max 2 decimals
+
+        // Format integer with dots every 3 digits (thousand separators)
+        const formattedInt = integerPart === '' ? '' : integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+        // Build final formatted value: keep comma even if no decimals typed yet
+        const formatted = hasDecimal ? `${formattedInt},${decimalPart}` : formattedInt;
+        setImporte(formatted);
+
+        // move cursor to end for predictable behaviour
+        setTimeout(() => {
+            try {
+                if (importeRef.current) {
+                    const len = importeRef.current.value.length;
+                    importeRef.current.setSelectionRange(len, len);
+                }
+            } catch (err) { /* ignore */ }
+        }, 0);
+    };
+
     const handleClose = () => {
         resetForm();
         onClose();
@@ -68,7 +118,7 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
         setLoading(true);
         
         const payload = {
-            tipo, fecha, importe: parseFloat(importe),
+            tipo, fecha, importe: parseCurrencyToNumber(importe),
             ...(tipo === 'ingreso' && { cliente, cuenta_id: parseInt(cuentaId), metodoPago_id: parseInt(metodoPagoId) }),
             ...(tipo === 'egreso' && { detalle, origen_id: parseInt(origenId), metodoPago_id: parseInt(metodoPagoId) })
         };
@@ -134,7 +184,7 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
                             <label className="text-base font-bold text-slate-700 mb-2 block">Monto total</label>
                             <div className="relative">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xl">$</span>
-                                <input type="number" step="0.01" value={importe} onChange={(e) => setImporte(e.target.value)} required 
+                                <input type="text" inputMode="decimal" value={importe} onChange={handleImporteChange} required 
                                     className="w-full pl-10 pr-4 py-4 border border-slate-200 rounded-2xl text-xl font-bold text-slate-900 focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all shadow-sm" />
                             </div>
                         </div>

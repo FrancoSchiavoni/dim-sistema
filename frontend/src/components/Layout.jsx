@@ -39,6 +39,10 @@ export default function Layout({ children }) {
                             <span className="material-symbols-outlined">sync_alt</span>
                             <span>Transacciones</span>
                         </button>
+                        <button onClick={() => navigate('/movimientos')} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors w-full text-left ${isActive('/movimientos') ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'}`}>
+                            <span className="material-symbols-outlined">note_add</span>
+                            <span>Movimientos</span>
+                        </button>
                     </nav>
                 </div>
                 <div className="mt-auto p-6 border-t border-slate-200 dark:border-slate-800">
