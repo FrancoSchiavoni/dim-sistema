@@ -29,7 +29,7 @@ export default function Layout({ children }) {
                         </div>
                         <div>
                             <h1 className="text-slate-900 dark:text-white text-base font-bold leading-tight">Finanzas DIM</h1>
-                            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">Gestión Interna</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">Sistema de Gestión Interna</p>
                         </div>
                     </div>
                     <nav className="flex flex-col gap-1">
