@@ -32,7 +32,6 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
                 .then(data => setCatalogos(data))
                 .catch(err => console.error("Error cargando catálogos:", err));
 
-            // Si estamos editando, rellenamos los campos
             if (movimientoAEditar) {
                 setTipo(movimientoAEditar.tipo);
                 setImporte(formatCurrencyInput(movimientoAEditar.monto));
@@ -61,7 +60,6 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
 
     const formatCurrencyInput = (value) => {
         if (value === null || value === undefined || value === '') return '';
-        // Accept numbers or strings; normalize then format for es-AR
         const num = typeof value === 'number' ? value : Number(String(value).replace(/\./g, '').replace(/,/g, '.'));
         if (isNaN(num)) return '';
         return new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
@@ -74,37 +72,25 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
         return parseFloat(normalized);
     };
 
-    const unformatCurrency = (str) => {
-        if (!str && str !== 0) return '';
-        // Remove thousand separators and normalize decimal to dot for editing
-        return String(str).replace(/\./g, '').replace(/,/g, '.');
-    };
-
     const handleImporteChange = (e) => {
         const raw = e.target.value;
-        // Extract pure input: keep only digits and comma (comma is decimal separator)
         const digitsOnly = raw.replace(/[^0-9,]/g, '');
         const hasDecimal = digitsOnly.includes(',');
-        // Allow only one comma (decimal separator)
         const parts = digitsOnly.split(',');
         let integerPart = parts[0] || '';
-        let decimalPart = parts[1] ? parts[1].slice(0, 2) : ''; // max 2 decimals
+        let decimalPart = parts[1] ? parts[1].slice(0, 2) : ''; 
 
-        // Format integer with dots every 3 digits (thousand separators)
         const formattedInt = integerPart === '' ? '' : integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
-        // Build final formatted value: keep comma even if no decimals typed yet
         const formatted = hasDecimal ? `${formattedInt},${decimalPart}` : formattedInt;
         setImporte(formatted);
 
-        // move cursor to end for predictable behaviour
         setTimeout(() => {
             try {
                 if (importeRef.current) {
                     const len = importeRef.current.value.length;
                     importeRef.current.setSelectionRange(len, len);
                 }
-            } catch (err) { /* ignore */ }
+            } catch (err) { }
         }, 0);
     };
 
@@ -141,93 +127,93 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={!loading && !showSuccess ? handleClose : undefined}></div>
 
             {showSuccess && (
-                <div className="absolute top-4 md:top-10 z-[60] flex items-center gap-2 md:gap-3 bg-emerald-500 text-white px-4 md:px-8 py-3 md:py-4 rounded-lg md:rounded-2xl shadow-2xl shadow-emerald-500/30 transform transition-all animate-bounce text-xs md:text-base">
-                    <span className="material-symbols-outlined text-xl md:text-3xl">check_circle</span>
+                <div className="absolute top-4 md:top-10 z-[60] flex items-center gap-2 md:gap-3 bg-emerald-500 text-white px-4 md:px-6 py-3 md:py-3.5 rounded-lg md:rounded-xl shadow-2xl shadow-emerald-500/30 transform transition-all animate-bounce text-xs md:text-sm">
+                    <span className="material-symbols-outlined text-xl md:text-2xl">check_circle</span>
                     <span className="font-bold tracking-wide">{isEdit ? '¡Cambios guardados!' : '¡Registro exitoso!'}</span>
                 </div>
             )}
 
-            <div className={`relative z-10 w-full max-w-5xl bg-white dark:bg-[#1a2634] rounded-2xl md:rounded-3xl shadow-2xl border-2 overflow-hidden flex flex-col transition-all duration-300 ${showSuccess ? 'opacity-50 pointer-events-none' : 'opacity-100'} ${tipo === 'ingreso' ? 'border-emerald-200' : 'border-rose-200'}`}>
+            <div className={`relative z-10 w-full max-w-3xl bg-white dark:bg-[#1a2634] rounded-2xl md:rounded-2xl shadow-2xl border-2 overflow-hidden flex flex-col transition-all duration-300 ${showSuccess ? 'opacity-50 pointer-events-none' : 'opacity-100'} ${tipo === 'ingreso' ? 'border-emerald-200' : 'border-rose-200'}`}>
 
-                <div className={`flex items-center justify-between px-4 md:px-10 py-4 md:py-8 border-b-2 ${tipo === 'ingreso' ? 'border-emerald-100 bg-emerald-50/30' : 'border-rose-100 bg-rose-50/30'}`}>
+                <div className={`flex items-center justify-between px-4 md:px-8 py-4 md:py-5 border-b-2 ${tipo === 'ingreso' ? 'border-emerald-100 bg-emerald-50/30' : 'border-rose-100 bg-rose-50/30'}`}>
                     <div>
-                        <h1 className="text-lg md:text-3xl font-extrabold text-slate-900 tracking-tight">{isEdit ? 'Editar Transacción' : 'Nueva Transacción'}</h1>
+                        <h1 className="text-lg md:text-2xl font-extrabold text-slate-900 tracking-tight">{isEdit ? 'Editar Transacción' : 'Nueva Transacción'}</h1>
                     </div>
-                    <button onClick={handleClose} disabled={loading} className="text-slate-400 hover:text-slate-700 bg-white hover:bg-slate-100 p-1 md:p-2 rounded-lg md:rounded-xl transition-all shadow-sm border border-slate-200">
-                        <span className="material-symbols-outlined text-2xl md:text-3xl block">close</span>
+                    <button onClick={handleClose} disabled={loading} className="text-slate-400 hover:text-slate-700 bg-white hover:bg-slate-100 p-1.5 md:p-2 rounded-lg transition-all shadow-sm border border-slate-200">
+                        <span className="material-symbols-outlined text-2xl md:text-2xl block">close</span>
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-4 md:p-12 space-y-4 md:space-y-8">
+                <form onSubmit={handleSubmit} className="p-4 md:p-8 space-y-4 md:space-y-6">
 
-                    <div className="grid grid-cols-2 gap-1.5 md:gap-2 p-1 md:p-1.5 bg-slate-100 rounded-lg md:rounded-2xl">
+                    <div className="grid grid-cols-2 gap-1.5 md:gap-2 p-1 md:p-1.5 bg-slate-100 rounded-lg md:rounded-xl">
                         <label className={`cursor-pointer ${isEdit && tipo === 'egreso' ? 'opacity-50 pointer-events-none' : ''}`}>
                             <input type="radio" name="tipo" value="ingreso" checked={tipo === 'ingreso'} onChange={(e) => setTipo(e.target.value)} disabled={isEdit} className="peer sr-only" />
-                            <div className="flex items-center justify-center gap-1 md:gap-3 py-2 md:py-4 rounded-lg md:rounded-xl text-slate-500 font-bold text-xs md:text-lg peer-checked:bg-white peer-checked:text-emerald-600 peer-checked:shadow-md transition-all">
-                                <span className="material-symbols-outlined text-[16px] md:text-[28px]">arrow_downward</span> <span className="hidden sm:inline">Ingreso</span>
+                            <div className="flex items-center justify-center gap-1 md:gap-2 py-2 md:py-2.5 rounded-lg text-slate-500 font-bold text-xs md:text-sm peer-checked:bg-white peer-checked:text-emerald-600 peer-checked:shadow-sm transition-all">
+                                <span className="material-symbols-outlined text-[16px] md:text-[20px]">arrow_downward</span> <span className="hidden sm:inline">Ingreso</span>
                             </div>
                         </label>
                         <label className={`cursor-pointer ${isEdit && tipo === 'ingreso' ? 'opacity-50 pointer-events-none' : ''}`}>
                             <input type="radio" name="tipo" value="egreso" checked={tipo === 'egreso'} onChange={(e) => setTipo(e.target.value)} disabled={isEdit} className="peer sr-only" />
-                            <div className="flex items-center justify-center gap-1 md:gap-3 py-2 md:py-4 rounded-lg md:rounded-xl text-slate-500 font-bold text-xs md:text-lg peer-checked:bg-white peer-checked:text-rose-600 peer-checked:shadow-md transition-all">
-                                <span className="material-symbols-outlined text-[16px] md:text-[28px]">arrow_upward</span> <span className="hidden sm:inline">Egreso</span>
+                            <div className="flex items-center justify-center gap-1 md:gap-2 py-2 md:py-2.5 rounded-lg text-slate-500 font-bold text-xs md:text-sm peer-checked:bg-white peer-checked:text-rose-600 peer-checked:shadow-sm transition-all">
+                                <span className="material-symbols-outlined text-[16px] md:text-[20px]">arrow_upward</span> <span className="hidden sm:inline">Egreso</span>
                             </div>
                         </label>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-8">
-                        <div className="lg:col-span-1">
-                            <label className="text-xs md:text-base font-bold text-slate-700 mb-1 md:mb-2 block">Monto total</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5">
+                        <div className="md:col-span-1">
+                            <label className="text-xs md:text-sm font-bold text-slate-700 mb-1 block">Monto total</label>
                             <div className="relative">
-                                <span className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-base md:text-xl">$</span>
-                                <input type="text" inputMode="decimal" value={importe} onChange={handleImporteChange} required
-                                    className="w-full pl-8 md:pl-10 pr-3 md:pr-4 py-2 md:py-4 border border-slate-200 rounded-lg md:rounded-2xl text-base md:text-xl font-bold text-slate-900 focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all shadow-sm" />
+                                <span className="absolute left-3 md:left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-base md:text-lg">$</span>
+                                <input type="text" inputMode="decimal" ref={importeRef} value={importe} onChange={handleImporteChange} required
+                                    className="w-full pl-8 md:pl-8 pr-3 py-2 md:py-2.5 border border-slate-200 rounded-lg md:rounded-xl text-base md:text-lg font-bold text-slate-900 focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all shadow-sm" />
                             </div>
                         </div>
-                        <div className="lg:col-span-2">
-                            <label className="text-xs md:text-base font-bold text-slate-700 mb-1 md:mb-2 block">Fecha del movimiento</label>
+                        <div className="md:col-span-2">
+                            <label className="text-xs md:text-sm font-bold text-slate-700 mb-1 block">Fecha del movimiento</label>
                             <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required
-                                className="w-full px-3 md:px-5 py-2 md:py-4 border border-slate-200 rounded-lg md:rounded-2xl text-xs md:text-lg font-medium text-slate-900 focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all shadow-sm" />
+                                className="w-full px-3 md:px-4 py-2 md:py-2.5 border border-slate-200 rounded-lg md:rounded-xl text-xs md:text-sm font-medium text-slate-900 focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all shadow-sm" />
                         </div>
                     </div>
 
                     {tipo === 'ingreso' && (
                         <>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-8 animate-fade-in">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5 animate-fade-in">
                             <div>
-                                <label className="text-xs md:text-base font-bold text-slate-700 mb-1 md:mb-2 block">Cliente o Empresa</label>
+                                <label className="text-xs md:text-sm font-bold text-slate-700 mb-1 block">Cliente o Empresa</label>
                                 <input type="text" value={cliente} onChange={(e) => setCliente(e.target.value)} required
-                                    className="w-full px-3 md:px-5 py-2 md:py-4 border border-slate-200 rounded-lg md:rounded-2xl text-sm md:text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm" />
+                                    className="w-full px-3 md:px-4 py-2 md:py-2.5 border border-slate-200 rounded-lg md:rounded-xl text-sm md:text-sm font-medium focus:ring-4 focus:ring-primary/20 shadow-sm" />
                             </div>
                             <div>
-                                <label className="text-xs md:text-base font-bold text-slate-700 mb-1 md:mb-2 block">Forma de Cobro</label>
+                                <label className="text-xs md:text-sm font-bold text-slate-700 mb-1 block">Forma de Cobro</label>
                                 <select value={metodoPagoId} onChange={(e) => setMetodoPagoId(e.target.value)} required
-                                    className="w-full px-3 md:px-5 py-2 md:py-4 border border-slate-200 rounded-lg md:rounded-2xl text-sm md:text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
+                                    className="w-full px-3 md:px-4 py-2 md:py-2.5 border border-slate-200 rounded-lg md:rounded-xl text-sm md:text-sm font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
                                     <option value="" disabled>Seleccionar...</option>
                                     {catalogos.metodosPago.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="text-xs md:text-base font-bold text-slate-700 mb-1 md:mb-2 block">Cuenta Destino</label>
+                                <label className="text-xs md:text-sm font-bold text-slate-700 mb-1 block">Cuenta Destino</label>
                                 <select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} required
-                                    className="w-full px-3 md:px-5 py-2 md:py-4 border border-slate-200 rounded-lg md:rounded-2xl text-sm md:text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
+                                    className="w-full px-3 md:px-4 py-2 md:py-2.5 border border-slate-200 rounded-lg md:rounded-xl text-sm md:text-sm font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
                                     <option value="" disabled>Seleccionar...</option>
                                     {catalogos.cuentas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                                 </select>
                             </div>
                         </div>
 
-                        <div className="lg:col-span-3 flex flex-col sm:flex-row items-center gap-2 md:gap-3 p-3 md:p-4 bg-gradient-to-r from-sky-50 to-blue-50 border-2 border-sky-200 rounded-lg md:rounded-xl">
+                        <div className="md:col-span-3 flex flex-col sm:flex-row items-center gap-2 md:gap-3 p-3 bg-gradient-to-r from-sky-50 to-blue-50 border border-sky-200 rounded-lg md:rounded-xl">
                             <div className="flex-1">
-                                <h3 className="text-sm md:text-base font-bold text-sky-900 mb-0.5">Una forma más rápida</h3>
+                                <h3 className="text-sm font-bold text-sky-900 mb-0.5">Una forma más rápida</h3>
                                 <p className="text-xs text-sky-700">Envía la captura de transferencia a nuestro bot de Telegram</p>
                             </div>
-                            <a href="https://t.me/dim_comprobantes_bot" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 md:px-6 py-2 md:py-2.5 bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs md:text-sm rounded-lg md:rounded-lg transition-all shadow-lg shadow-sky-500/30 hover:shadow-sky-500/40 active:scale-95 whitespace-nowrap">
-                                <span className="material-symbols-outlined text-[16px] md:text-[18px]">send</span>
+                            <a href="https://t.me/dim_comprobantes_bot" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs rounded-lg transition-all shadow-md hover:shadow-lg active:scale-95 whitespace-nowrap">
+                                <span className="material-symbols-outlined text-[16px]">send</span>
                                 <span>Telegram</span>
                             </a>
                         </div>
@@ -235,26 +221,24 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
                     )}
 
                     {tipo === 'egreso' && (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-8 animate-fade-in">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5 animate-fade-in">
                             <div>
-                                <label className="text-xs md:text-base font-bold text-slate-700 mb-1 md:mb-2 block">Detalle del Gasto</label>
+                                <label className="text-xs md:text-sm font-bold text-slate-700 mb-1 block">Detalle del Gasto</label>
                                 <input type="text" value={detalle} onChange={(e) => setDetalle(e.target.value)} required
-                                    className="w-full px-3 md:px-5 py-2 md:py-4 border border-slate-200 rounded-lg md:rounded-2xl text-sm md:text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm" />
+                                    className="w-full px-3 md:px-4 py-2 md:py-2.5 border border-slate-200 rounded-lg md:rounded-xl text-sm font-medium focus:ring-4 focus:ring-primary/20 shadow-sm" />
                             </div>
-
                             <div>
-                                <label className="text-xs md:text-base font-bold text-slate-700 mb-1 md:mb-2 block">Forma de Pago</label>
+                                <label className="text-xs md:text-sm font-bold text-slate-700 mb-1 block">Forma de Pago</label>
                                 <select value={metodoPagoId} onChange={(e) => setMetodoPagoId(e.target.value)} required
-                                    className="w-full px-3 md:px-5 py-2 md:py-4 border border-slate-200 rounded-lg md:rounded-2xl text-sm md:text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
+                                    className="w-full px-3 md:px-4 py-2 md:py-2.5 border border-slate-200 rounded-lg md:rounded-xl text-sm font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
                                     <option value="" disabled>Seleccionar...</option>
                                     {catalogos.metodosPago.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
                                 </select>
                             </div>
                             <div>
-
-                                <label className="text-xs md:text-base font-bold text-slate-700 mb-1 md:mb-2 block">Categoría (Origen)</label>
+                                <label className="text-xs md:text-sm font-bold text-slate-700 mb-1 block">Categoría (Origen)</label>
                                 <select value={origenId} onChange={(e) => setOrigenId(e.target.value)} required
-                                    className="w-full px-3 md:px-5 py-2 md:py-4 border border-slate-200 rounded-lg md:rounded-2xl text-sm md:text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
+                                    className="w-full px-3 md:px-4 py-2 md:py-2.5 border border-slate-200 rounded-lg md:rounded-xl text-sm font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
                                     <option value="" disabled>Seleccionar...</option>
                                     {catalogos.origenes.map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
                                 </select>
@@ -262,14 +246,14 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
                         </div>
                     )}
 
-                    <div className="pt-4 md:pt-10 border-t-2 border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 md:gap-6">
+                    <div className="pt-4 md:pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-end gap-3 md:gap-4">
                         <button type="button" onClick={handleClose} disabled={loading || showSuccess}
-                            className="w-full sm:w-auto px-6 md:px-10 py-2 md:py-4 rounded-lg md:rounded-2xl border-2 border-slate-200 text-slate-600 font-bold text-sm md:text-lg hover:bg-slate-50 transition-all active:scale-95">
+                            className="w-full sm:w-auto px-6 py-2 md:py-2.5 rounded-lg md:rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-all active:scale-95">
                             Cancelar
                         </button>
                         <button type="submit" disabled={loading || showSuccess}
-                            className={`w-full sm:w-auto px-8 md:px-12 py-2 md:py-4 rounded-lg md:rounded-2xl text-white font-bold text-sm md:text-lg flex items-center justify-center gap-2 md:gap-3 shadow-xl disabled:opacity-50 transition-all hover:-translate-y-1 active:scale-95 ${tipo === 'ingreso' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/30' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/30'}`}>
-                            <span className="material-symbols-outlined text-[20px] md:text-[28px]">{loading ? 'sync' : 'check'}</span>
+                            className={`w-full sm:w-auto px-8 py-2 md:py-2.5 rounded-lg md:rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md disabled:opacity-50 transition-all hover:-translate-y-0.5 active:scale-95 ${tipo === 'ingreso' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'}`}>
+                            <span className="material-symbols-outlined text-[18px] md:text-[20px]">{loading ? 'sync' : 'check'}</span>
                             <span>{isEdit ? 'Guardar Cambios' : 'Confirmar Registro'}</span>
                         </button>
                     </div>
