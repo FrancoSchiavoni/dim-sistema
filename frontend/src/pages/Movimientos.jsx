@@ -106,9 +106,9 @@ export default function Movimientos() {
                     <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Nuevo Movimiento</h2>
                 </div>
 
-                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-10">
+                <div className={`bg-white rounded-3xl shadow-sm border-2 p-10 transition-all duration-300 ${tipo === 'ingreso' ? 'border-emerald-200' : 'border-rose-200'}`}>
                     <form onSubmit={handleSubmit} className="space-y-8">
-                        <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 rounded-2xl">
+                        <div className={`grid grid-cols-2 gap-2 p-1.5 rounded-2xl transition-all duration-300 ${tipo === 'ingreso' ? 'bg-emerald-50' : 'bg-rose-50'}`}>
                             <label>
                                 <input type="radio" name="tipo" value="ingreso" checked={tipo === 'ingreso'} onChange={(e) => setTipo(e.target.value)} className="peer sr-only" />
                                 <div className="flex items-center justify-center gap-3 py-4 rounded-xl text-slate-500 font-bold text-lg peer-checked:bg-white peer-checked:text-emerald-600 peer-checked:shadow-md transition-all">
@@ -199,7 +199,7 @@ export default function Movimientos() {
                                 Limpiar
                             </button>
                             <button type="submit" disabled={loading || showSuccess}
-                                className="px-12 py-4 rounded-2xl bg-primary hover:bg-blue-600 text-white font-bold text-lg flex items-center gap-3 shadow-xl shadow-primary/30 disabled:opacity-50 transition-all hover:-translate-y-1 active:scale-95">
+                                className={`px-12 py-4 rounded-2xl text-white font-bold text-lg flex items-center gap-3 shadow-xl disabled:opacity-50 transition-all hover:-translate-y-1 active:scale-95 ${tipo === 'ingreso' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/30' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/30'}`}>
                                 <span className="material-symbols-outlined text-[28px]">{loading ? 'sync' : 'check'}</span>
                                 {loading ? 'Guardando...' : 'Confirmar Registro'}
                             </button>

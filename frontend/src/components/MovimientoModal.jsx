@@ -151,9 +151,9 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
                 </div>
             )}
 
-            <div className={`relative z-10 w-full max-w-5xl bg-white dark:bg-[#1a2634] rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col transition-opacity duration-300 ${showSuccess ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+            <div className={`relative z-10 w-full max-w-5xl bg-white dark:bg-[#1a2634] rounded-3xl shadow-2xl border-2 overflow-hidden flex flex-col transition-all duration-300 ${showSuccess ? 'opacity-50 pointer-events-none' : 'opacity-100'} ${tipo === 'ingreso' ? 'border-emerald-200' : 'border-rose-200'}`}>
 
-                <div className="flex items-center justify-between px-10 py-8 border-b border-slate-100 bg-slate-50/50">
+                <div className={`flex items-center justify-between px-10 py-8 border-b-2 ${tipo === 'ingreso' ? 'border-emerald-100 bg-emerald-50/30' : 'border-rose-100 bg-rose-50/30'}`}>
                     <div>
                         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">{isEdit ? 'Editar Transacción' : 'Nueva Transacción'}</h1>
                     </div>
@@ -255,7 +255,7 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
                             Cancelar
                         </button>
                         <button type="submit" disabled={loading || showSuccess}
-                            className="px-12 py-4 rounded-2xl bg-primary hover:bg-blue-600 text-white font-bold text-lg flex items-center gap-3 shadow-xl shadow-primary/30 disabled:opacity-50 transition-all hover:-translate-y-1 active:scale-95">
+                            className={`px-12 py-4 rounded-2xl text-white font-bold text-lg flex items-center gap-3 shadow-xl disabled:opacity-50 transition-all hover:-translate-y-1 active:scale-95 ${tipo === 'ingreso' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/30' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/30'}`}>
                             <span className="material-symbols-outlined text-[28px]">{loading ? 'sync' : 'check'}</span>
                             {isEdit ? 'Guardar Cambios' : 'Confirmar Registro'}
                         </button>
