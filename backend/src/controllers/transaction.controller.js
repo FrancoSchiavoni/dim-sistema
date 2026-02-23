@@ -2,6 +2,11 @@ const { query, run } = require('../config/db');
 
 const getMovimientos = async (req, res, next) => {
     try {
+        const { desde, hasta } = req.query;
+        const whereClause = desde && hasta ? `WHERE i.fecha BETWEEN ? AND ?` : '';
+        const egresosWhereClause = desde && hasta ? `WHERE e.fecha BETWEEN ? AND ?` : '';
+        const params = desde && hasta ? [desde, hasta] : [];
+
         const sqlIngresos = `
             SELECT i.id, i.fecha, i.importe as monto, i.cliente as detalle, 
                    c.nombre as cuenta, i.cuenta_id, 
@@ -10,6 +15,7 @@ const getMovimientos = async (req, res, next) => {
             FROM ingresos i
             LEFT JOIN cuentas c ON i.cuenta_id = c.id
             LEFT JOIN metodosPago m ON i.metodoPago_id = m.id
+            ${whereClause}
             ORDER BY i.fecha DESC
         `;
         
@@ -21,11 +27,12 @@ const getMovimientos = async (req, res, next) => {
             FROM egresos e
             LEFT JOIN origenes o ON e.origen_id = o.id
             LEFT JOIN metodosPago m ON e.metodoPago_id = m.id
+            ${egresosWhereClause}
             ORDER BY e.fecha DESC
         `;
 
-        const ingresos = await query(sqlIngresos);
-        const egresos = await query(sqlEgresos);
+        const ingresos = desde && hasta ? await query(sqlIngresos, params) : await query(sqlIngresos);
+        const egresos = desde && hasta ? await query(sqlEgresos, params) : await query(sqlEgresos);
         res.json({ ingresos, egresos });
     } catch (error) { next(error); }
 };

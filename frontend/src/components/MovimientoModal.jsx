@@ -11,7 +11,7 @@ const getTodayDate = () => {
 
 export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAEditar }) {
     const isEdit = !!movimientoAEditar;
-    
+
     const [tipo, setTipo] = useState('ingreso');
     const [importe, setImporte] = useState('');
     const [fecha, setFecha] = useState(getTodayDate());
@@ -29,16 +29,16 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
     useEffect(() => {
         if (isOpen) {
             api.get('/transacciones/catalogos')
-               .then(data => setCatalogos(data))
-               .catch(err => console.error("Error cargando catálogos:", err));
-               
+                .then(data => setCatalogos(data))
+                .catch(err => console.error("Error cargando catálogos:", err));
+
             // Si estamos editando, rellenamos los campos
             if (movimientoAEditar) {
                 setTipo(movimientoAEditar.tipo);
                 setImporte(formatCurrencyInput(movimientoAEditar.monto));
                 setFecha(movimientoAEditar.fecha);
                 setMetodoPagoId(movimientoAEditar.metodoPago_id || '');
-                
+
                 if (movimientoAEditar.tipo === 'ingreso') {
                     setCliente(movimientoAEditar.detalle || '');
                     setCuentaId(movimientoAEditar.cuenta_id || '');
@@ -116,7 +116,7 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        
+
         const payload = {
             tipo, fecha, importe: parseCurrencyToNumber(importe),
             ...(tipo === 'ingreso' && { cliente, cuenta_id: parseInt(cuentaId), metodoPago_id: parseInt(metodoPagoId) }),
@@ -143,7 +143,7 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={!loading && !showSuccess ? handleClose : undefined}></div>
-            
+
             {showSuccess && (
                 <div className="absolute top-10 z-[60] flex items-center gap-3 bg-emerald-500 text-white px-8 py-4 rounded-2xl shadow-2xl shadow-emerald-500/30 transform transition-all animate-bounce">
                     <span className="material-symbols-outlined text-3xl">check_circle</span>
@@ -151,8 +151,8 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
                 </div>
             )}
 
-            <div className={`relative z-10 w-full max-w-4xl bg-white dark:bg-[#1a2634] rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col transition-opacity duration-300 ${showSuccess ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-                
+            <div className={`relative z-10 w-full max-w-5xl bg-white dark:bg-[#1a2634] rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col transition-opacity duration-300 ${showSuccess ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+
                 <div className="flex items-center justify-between px-10 py-8 border-b border-slate-100 bg-slate-50/50">
                     <div>
                         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">{isEdit ? 'Editar Transacción' : 'Nueva Transacción'}</h1>
@@ -162,8 +162,8 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-10 space-y-8">
-                    
+                <form onSubmit={handleSubmit} className="p-12 space-y-8">
+
                     <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 rounded-2xl">
                         <label className={`cursor-pointer ${isEdit && tipo === 'egreso' ? 'opacity-50 pointer-events-none' : ''}`}>
                             <input type="radio" name="tipo" value="ingreso" checked={tipo === 'ingreso'} onChange={(e) => setTipo(e.target.value)} disabled={isEdit} className="peer sr-only" />
@@ -179,18 +179,18 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
                         </label>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="lg:col-span-1">
                             <label className="text-base font-bold text-slate-700 mb-2 block">Monto total</label>
                             <div className="relative">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xl">$</span>
-                                <input type="text" inputMode="decimal" value={importe} onChange={handleImporteChange} required 
+                                <input type="text" inputMode="decimal" value={importe} onChange={handleImporteChange} required
                                     className="w-full pl-10 pr-4 py-4 border border-slate-200 rounded-2xl text-xl font-bold text-slate-900 focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all shadow-sm" />
                             </div>
                         </div>
-                        <div>
+                        <div className="lg:col-span-2">
                             <label className="text-base font-bold text-slate-700 mb-2 block">Fecha del movimiento</label>
-                            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required 
+                            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required
                                 className="w-full px-5 py-4 border border-slate-200 rounded-2xl text-lg font-medium text-slate-900 focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all shadow-sm" />
                         </div>
                     </div>
@@ -199,64 +199,64 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-in">
                             <div>
                                 <label className="text-base font-bold text-slate-700 mb-2 block">Cliente o Empresa</label>
-                                <input type="text" value={cliente} onChange={(e) => setCliente(e.target.value)} required 
+                                <input type="text" value={cliente} onChange={(e) => setCliente(e.target.value)} required
                                     className="w-full px-5 py-4 border border-slate-200 rounded-2xl text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm" />
                             </div>
                             <div>
-                                <label className="text-base font-bold text-slate-700 mb-2 block">Cuenta Destino</label>
-                                <select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} required 
-                                    className="w-full px-5 py-4 border border-slate-200 rounded-2xl text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
-                                    <option value="" disabled>Seleccionar...</option>
-                                    {catalogos.cuentas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                                </select>
-                            </div>
-                            <div>
                                 <label className="text-base font-bold text-slate-700 mb-2 block">Forma de Cobro</label>
-                                <select value={metodoPagoId} onChange={(e) => setMetodoPagoId(e.target.value)} required 
+                                <select value={metodoPagoId} onChange={(e) => setMetodoPagoId(e.target.value)} required
                                     className="w-full px-5 py-4 border border-slate-200 rounded-2xl text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
                                     <option value="" disabled>Seleccionar...</option>
                                     {catalogos.metodosPago.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-base font-bold text-slate-700 mb-2 block">Cuenta Destino</label>
+                                <select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} required
+                                    className="w-full px-5 py-4 border border-slate-200 rounded-2xl text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
+                                    <option value="" disabled>Seleccionar...</option>
+                                    {catalogos.cuentas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                                 </select>
                             </div>
                         </div>
                     )}
 
                     {tipo === 'egreso' && (
-                        <div className="space-y-8 animate-fade-in">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div>
-                                    <label className="text-base font-bold text-slate-700 mb-2 block">Categoría (Origen)</label>
-                                    <select value={origenId} onChange={(e) => setOrigenId(e.target.value)} required 
-                                        className="w-full px-5 py-4 border border-slate-200 rounded-2xl text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
-                                        <option value="" disabled>Seleccionar...</option>
-                                        {catalogos.origenes.map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-base font-bold text-slate-700 mb-2 block">Forma de Pago</label>
-                                    <select value={metodoPagoId} onChange={(e) => setMetodoPagoId(e.target.value)} required 
-                                        className="w-full px-5 py-4 border border-slate-200 rounded-2xl text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
-                                        <option value="" disabled>Seleccionar...</option>
-                                        {catalogos.metodosPago.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
-                                    </select>
-                                </div>
-                            </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
                             <div>
                                 <label className="text-base font-bold text-slate-700 mb-2 block">Detalle del Gasto</label>
-                                <input type="text" value={detalle} onChange={(e) => setDetalle(e.target.value)} required 
+                                <input type="text" value={detalle} onChange={(e) => setDetalle(e.target.value)} required
                                     className="w-full px-5 py-4 border border-slate-200 rounded-2xl text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm" />
+                            </div>
+
+                            <div>
+                                <label className="text-base font-bold text-slate-700 mb-2 block">Forma de Pago</label>
+                                <select value={metodoPagoId} onChange={(e) => setMetodoPagoId(e.target.value)} required
+                                    className="w-full px-5 py-4 border border-slate-200 rounded-2xl text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
+                                    <option value="" disabled>Seleccionar...</option>
+                                    {catalogos.metodosPago.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
+                                </select>
+                            </div>
+                            <div>
+
+                                <label className="text-base font-bold text-slate-700 mb-2 block">Categoría (Origen)</label>
+                                <select value={origenId} onChange={(e) => setOrigenId(e.target.value)} required
+                                    className="w-full px-5 py-4 border border-slate-200 rounded-2xl text-lg font-medium focus:ring-4 focus:ring-primary/20 shadow-sm bg-white cursor-pointer">
+                                    <option value="" disabled>Seleccionar...</option>
+                                    {catalogos.origenes.map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
+                                </select>
                             </div>
                         </div>
                     )}
 
-                    <div className="pt-8 border-t border-slate-100 flex justify-end gap-4">
-                        <button type="button" onClick={handleClose} disabled={loading || showSuccess} 
-                            className="px-8 py-4 rounded-2xl border-2 border-slate-200 text-slate-600 font-bold text-lg hover:bg-slate-50 transition-all">
+                    <div className="pt-10 border-t-2 border-slate-100 flex items-center justify-between gap-6">
+                        <button type="button" onClick={handleClose} disabled={loading || showSuccess}
+                            className="px-10 py-4 rounded-2xl border-2 border-slate-200 text-slate-600 font-bold text-lg hover:bg-slate-50 transition-all active:scale-95">
                             Cancelar
                         </button>
-                        <button type="submit" disabled={loading || showSuccess} 
-                            className="px-10 py-4 rounded-2xl bg-primary hover:bg-blue-600 text-white font-bold text-lg flex items-center gap-3 shadow-xl shadow-primary/30 disabled:opacity-50 transition-all hover:-translate-y-1 active:scale-95">
-                            <span className="material-symbols-outlined text-[28px]">{loading ? 'sync' : 'save'}</span>
+                        <button type="submit" disabled={loading || showSuccess}
+                            className="px-12 py-4 rounded-2xl bg-primary hover:bg-blue-600 text-white font-bold text-lg flex items-center gap-3 shadow-xl shadow-primary/30 disabled:opacity-50 transition-all hover:-translate-y-1 active:scale-95">
+                            <span className="material-symbols-outlined text-[28px]">{loading ? 'sync' : 'check'}</span>
                             {isEdit ? 'Guardar Cambios' : 'Confirmar Registro'}
                         </button>
                     </div>

@@ -1,16 +1,25 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import MovimientoModal from '../components/MovimientoModal';
+import * as XLSX from 'xlsx';
 
 export default function Transacciones() {
     const [movimientos, setMovimientos] = useState({ ingresos: [], egresos: [] });
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('ingresos');
 
+    // Filtro de fechas
+    const [desde, setDesde] = useState(() => {
+        const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+    });
+    const [hasta, setHasta] = useState(() => {
+        const d = new Date(); return new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
+    });
+
     // Estados de Notificaciones y Popups
     const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
-    const [itemToDelete, setItemToDelete] = useState(null); // Nuevo estado para el popup de borrar
-    const [isDeleting, setIsDeleting] = useState(false); // Para mostrar estado de "Cargando..." al borrar
+    const [itemToDelete, setItemToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Paginación
     const [currentPage, setCurrentPage] = useState(1);
@@ -23,7 +32,7 @@ export default function Transacciones() {
     const fetchMovimientos = async () => {
         setLoading(true);
         try {
-            const data = await api.get('/transacciones');
+            const data = await api.get(`/transacciones?desde=${desde}&hasta=${hasta}`);
             setMovimientos({ ingresos: data.ingresos || [], egresos: data.egresos || [] });
         } catch (error) {
             console.error('Error cargando transacciones:', error);
@@ -32,7 +41,7 @@ export default function Transacciones() {
         }
     };
 
-    useEffect(() => { fetchMovimientos(); }, []);
+    useEffect(() => { fetchMovimientos(); }, [desde, hasta]);
     useEffect(() => { setCurrentPage(1); }, [activeTab, itemsPerPage]);
 
     // Funciones de Acción
@@ -78,6 +87,30 @@ export default function Transacciones() {
         const date = new Date(dateStr);
         date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
         return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    };
+
+    const exportToExcel = () => {
+        const data = paginatedData.map(mov => ({
+            Fecha: formatDate(mov.fecha),
+            ...(activeTab === 'ingresos' ? {
+                Cliente: mov.detalle,
+                'Cuenta Destino': mov.cuenta || 'N/A',
+                'Forma de Cobro': mov.metodo_pago || 'N/A',
+                Monto: mov.monto
+            } : {
+                Detalle: mov.detalle,
+                Categoría: mov.origen || 'N/A',
+                'Método de Pago': mov.metodo_pago || 'N/A',
+                Monto: mov.monto
+            })
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, activeTab);
+        
+        const fileName = `${activeTab}-${desde}-${hasta}.xlsx`;
+        XLSX.writeFile(workbook, fileName);
     };
 
     return (
@@ -135,6 +168,24 @@ export default function Transacciones() {
                     <div>
                         <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Historial de Transacciones</h2>
                     </div>
+                </div>
+
+                {/* Barra de Filtros de Fechas */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col sm:flex-row items-center gap-6">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <span className="text-base text-slate-500 font-semibold">Desde:</span>
+                        <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="px-4 py-2.5 border border-slate-200 rounded-xl text-base focus:ring-2 focus:ring-primary/50 bg-slate-50 w-full sm:w-auto" />
+                    </div>
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <span className="text-base text-slate-500 font-semibold">Hasta:</span>
+                        <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="px-4 py-2.5 border border-slate-200 rounded-xl text-base focus:ring-2 focus:ring-primary/50 bg-slate-50 w-full sm:w-auto" />
+                    </div>
+                    {paginatedData.length > 0 && (
+                        <button onClick={exportToExcel} className="ml-auto flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-all shadow-md">
+                            <span className="material-symbols-outlined">download</span>
+                            Exportar Excel
+                        </button>
+                    )}
                 </div>
 
                 <div className="flex space-x-2 bg-slate-200/50 p-1.5 rounded-2xl w-fit">
