@@ -18,11 +18,14 @@ const login = async (req, res, next) => {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
-        // Verificar contraseña
-        const validPassword = await bcrypt.compare(password, user.passwordHash);
+        // Verificar contraseña (compatibilidad SQLite y Postgres)
+        const hashGuardado = user.passwordHash || user.passwordhash;
+        const validPassword = await bcrypt.compare(password, hashGuardado);
+        
         if (!validPassword) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
+
 
         // Generar JWT
         const token = jwt.sign(
