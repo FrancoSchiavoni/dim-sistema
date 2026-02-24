@@ -7,6 +7,14 @@ export default function Transacciones() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('ingresos');
 
+    // Estados para el filtro de fechas (Igual que en Dashboard)
+    const [desde, setDesde] = useState(() => {
+        const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+    });
+    const [hasta, setHasta] = useState(() => {
+        const d = new Date(); return new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
+    });
+
     const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -17,10 +25,11 @@ export default function Transacciones() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [movimientoAEditar, setMovimientoAEditar] = useState(null);
 
+    // Actualizamos la consulta para enviar las fechas a la API
     const fetchMovimientos = async () => {
         setLoading(true);
         try {
-            const data = await api.get('/transacciones');
+            const data = await api.get(`/transacciones?desde=${desde}&hasta=${hasta}`);
             setMovimientos({ ingresos: data.ingresos || [], egresos: data.egresos || [] });
         } catch (error) {
             console.error('Error cargando transacciones:', error);
@@ -29,7 +38,8 @@ export default function Transacciones() {
         }
     };
 
-    useEffect(() => { fetchMovimientos(); }, []);
+    // Escuchamos los cambios en las fechas para recargar la tabla
+    useEffect(() => { fetchMovimientos(); }, [desde, hasta]);
     useEffect(() => { setCurrentPage(1); }, [activeTab, itemsPerPage]);
 
     const handleEdit = (movimiento) => {
@@ -58,6 +68,54 @@ export default function Transacciones() {
         }
     };
 
+    // --- FUNCIÓN PARA DESCARGAR EXCEL (CSV optimizado) ---
+    const handleExportExcel = () => {
+        const dataToExport = movimientos[activeTab];
+        if (dataToExport.length === 0) return alert('No hay datos en este período para exportar.');
+
+        // Carácter especial (BOM) para que Excel en español reconozca tildes y ñ
+        let csvContent = '\uFEFF'; 
+        
+        // Definir Cabeceras
+        const headers = activeTab === 'ingresos' 
+            ? ['Fecha', 'Cliente', 'Cuenta Destino', 'Forma de Cobro', 'Monto', 'Fecha de Registro', 'Cargado por']
+            : ['Fecha', 'Detalle', 'Categoría (Origen)', 'Método de Pago', 'Monto', 'Fecha de Registro', 'Cargado por'];
+        
+        csvContent += headers.join(';') + '\n';
+
+        // Llenar Filas
+        dataToExport.forEach(mov => {
+            const fechaLimpia = new Date(mov.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const fechaRegistroLimpia = mov.fecha_registro ? new Date(mov.fecha_registro).toLocaleString('es-AR') : '';
+            // Formatear monto para que Excel en Argentina entienda los decimales (con coma)
+            const montoFormateado = String(mov.monto).replace('.', ',');
+
+            const row = [
+                fechaLimpia,
+                activeTab === 'ingresos' ? mov.detalle : mov.detalle,
+                activeTab === 'ingresos' ? (mov.cuenta || '') : (mov.origen || ''),
+                mov.metodo_pago || '',
+                montoFormateado,
+                fechaRegistroLimpia,
+                mov.registrador || ''
+            ];
+
+            // Envolver cada valor en comillas dobles y escapar contenido interno para evitar errores
+            const cleanRow = row.map(item => `"${String(item).replace(/"/g, '""')}"`);
+            csvContent += cleanRow.join(';') + '\n';
+        });
+
+        // Crear archivo descargable
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Reporte_${activeTab}_${desde}_al_${hasta}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const activeData = movimientos[activeTab];
     const totalItems = activeData.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
@@ -82,6 +140,7 @@ export default function Transacciones() {
     return (
         <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-background-light dark:bg-background-dark relative">
 
+            {/* Modales de Notificación y Borrado... (Se mantienen iguales) */}
             {showDeleteSuccess && (
                 <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 md:gap-3 bg-emerald-500 text-white px-6 md:px-8 py-3 md:py-3.5 rounded-xl md:rounded-2xl shadow-2xl shadow-emerald-500/30 transform transition-all animate-bounce text-sm md:text-base">
                     <span className="material-symbols-outlined text-2xl md:text-3xl">delete_sweep</span>
@@ -119,12 +178,32 @@ export default function Transacciones() {
                     </div>
                 </div>
 
-                <div className="flex space-x-2 bg-slate-200/50 p-1 md:p-1.5 rounded-xl md:rounded-2xl w-fit">
-                    <button onClick={() => setActiveTab('ingresos')} className={`flex items-center gap-1.5 md:gap-2 px-6 md:px-8 py-2 md:py-2.5 text-sm md:text-base font-bold rounded-lg md:rounded-xl transition-all ${activeTab === 'ingresos' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}>
-                        <span className="material-symbols-outlined text-[18px] md:text-[20px]">arrow_downward</span> Ingresos
-                    </button>
-                    <button onClick={() => setActiveTab('egresos')} className={`flex items-center gap-1.5 md:gap-2 px-6 md:px-8 py-2 md:py-2.5 text-sm md:text-base font-bold rounded-lg md:rounded-xl transition-all ${activeTab === 'egresos' ? 'bg-white shadow-sm text-rose-500' : 'text-slate-500 hover:text-slate-700'}`}>
-                        <span className="material-symbols-outlined text-[18px] md:text-[20px]">arrow_upward</span> Egresos
+                {/* NUEVO: Contenedor de Filtros de Fecha */}
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl md:rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center gap-4">
+                    <div className="flex items-center gap-2 md:gap-3 w-full sm:w-auto">
+                        <span className="text-sm md:text-base text-slate-500 font-semibold">Desde:</span>
+                        <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="px-3 md:px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-primary/50 bg-slate-50 dark:bg-slate-800 dark:text-white w-full sm:w-auto" />
+                    </div>
+                    <div className="flex items-center gap-2 md:gap-3 w-full sm:w-auto">
+                        <span className="text-sm md:text-base text-slate-500 font-semibold">Hasta:</span>
+                        <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="px-3 md:px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-primary/50 bg-slate-50 dark:bg-slate-800 dark:text-white w-full sm:w-auto" />
+                    </div>
+                </div>
+
+                {/* NUEVO: Contenedor de Pestañas y Botón Exportar */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex space-x-2 bg-slate-200/50 p-1 md:p-1.5 rounded-xl md:rounded-2xl w-fit">
+                        <button onClick={() => setActiveTab('ingresos')} className={`flex items-center gap-1.5 md:gap-2 px-6 md:px-8 py-2 md:py-2.5 text-sm md:text-base font-bold rounded-lg md:rounded-xl transition-all ${activeTab === 'ingresos' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}>
+                            <span className="material-symbols-outlined text-[18px] md:text-[20px]">arrow_downward</span> Ingresos
+                        </button>
+                        <button onClick={() => setActiveTab('egresos')} className={`flex items-center gap-1.5 md:gap-2 px-6 md:px-8 py-2 md:py-2.5 text-sm md:text-base font-bold rounded-lg md:rounded-xl transition-all ${activeTab === 'egresos' ? 'bg-white shadow-sm text-rose-500' : 'text-slate-500 hover:text-slate-700'}`}>
+                            <span className="material-symbols-outlined text-[18px] md:text-[20px]">arrow_upward</span> Egresos
+                        </button>
+                    </div>
+
+                    <button onClick={handleExportExcel} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white shadow-md transition-all active:scale-95 text-sm md:text-base ${activeTab === 'ingresos' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'}`}>
+                        <span className="material-symbols-outlined">download</span>
+                        Exportar {activeTab === 'ingresos' ? 'Ingresos' : 'Egresos'}
                     </button>
                 </div>
 
@@ -155,9 +234,9 @@ export default function Transacciones() {
                             </thead>
                             <tbody className="divide-y divide-slate-50 text-sm md:text-base">
                                 {loading ? (
-                                    <tr><td colSpan="6" className="text-center py-8 md:py-12 text-slate-500 text-sm md:text-lg">Cargando datos...</td></tr>
+                                    <tr><td colSpan="8" className="text-center py-8 md:py-12 text-slate-500 text-sm md:text-lg">Cargando datos...</td></tr>
                                 ) : paginatedData.length === 0 ? (
-                                    <tr><td colSpan="6" className="text-center py-8 md:py-12 text-slate-500 text-sm md:text-lg">No hay {activeTab} registrados.</td></tr>
+                                    <tr><td colSpan="8" className="text-center py-8 md:py-12 text-slate-500 text-sm md:text-lg">No hay {activeTab} registrados en estas fechas.</td></tr>
                                 ) : (
                                     paginatedData.map((mov) => (
                                         <tr key={`${activeTab}-${mov.id}`} className="hover:bg-slate-50 transition-colors group">
