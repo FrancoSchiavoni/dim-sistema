@@ -101,7 +101,8 @@ export default function Dashboard() {
                 <h4 className="text-base md:text-lg font-bold text-slate-800 dark:text-slate-100">{title}</h4>
             </div>
             
-            <div className="overflow-y-auto max-h-[180px] md:max-h-[220px] flex-1 scrollbar-thin scrollbar-thumb-slate-200 pr-1">
+            {/* FIX: overflow-x-hidden evita la barra horizontal y ajustamos los paddings */}
+            <div className="overflow-y-auto overflow-x-hidden max-h-[180px] md:max-h-[220px] flex-1 scrollbar-thin scrollbar-thumb-slate-200 pr-2">
                 {loading ? (
                     <p className="text-sm text-slate-500 py-4 text-center">Cargando datos...</p>
                 ) : data.length === 0 ? (
@@ -111,11 +112,10 @@ export default function Dashboard() {
                 ) : (
                     <div className="space-y-1">
                         {data.map((item, index) => (
-                            // La fila ahora es un botón clickeable
                             <div 
                                 key={index} 
                                 onClick={() => handleRowClick(item.label, isIncome)}
-                                className="flex justify-between items-center border-b border-slate-50 dark:border-slate-800 pb-2 pt-2 px-2 -mx-2 last:border-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                className="flex justify-between items-center border-b border-slate-50 dark:border-slate-800 py-2 px-2 last:border-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
                                 title="Ver detalle de transacciones"
                             >
                                 <span className="text-sm font-medium text-slate-600 dark:text-slate-300 truncate pr-2">{item.label}</span>
@@ -128,7 +128,7 @@ export default function Dashboard() {
                 )}
             </div>
             
-            <div className="pt-3 mt-3 flex justify-between items-center border-t-2 border-slate-50 dark:border-slate-800 px-2 -mx-2">
+            <div className="pt-3 mt-3 flex justify-between items-center border-t-2 border-slate-50 dark:border-slate-800 px-2">
                 <span className="text-sm font-extrabold text-slate-700 dark:text-slate-300">Total:</span>
                 <span className={`font-black text-lg ${isIncome ? 'text-emerald-600' : 'text-rose-600'}`}>
                     {formatCurrency(data.reduce((acc, cur) => acc + Number(cur.total), 0))}
@@ -136,7 +136,6 @@ export default function Dashboard() {
             </div>
         </div>
     );
-
     return (
         <div className="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark p-4 md:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto space-y-6">
