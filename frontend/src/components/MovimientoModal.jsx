@@ -35,8 +35,21 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
             if (movimientoAEditar) {
                 setTipo(movimientoAEditar.tipo);
                 setImporte(formatCurrencyInput(movimientoAEditar.monto));
-                setFecha(movimientoAEditar.fecha);
-                setMetodoPagoId(movimientoAEditar.metodoPago_id || '');
+                
+                // FIX 1: Formatear la fecha a YYYY-MM-DD ajustando la zona horaria
+                let dateStr = getTodayDate();
+                if (movimientoAEditar.fecha) {
+                    const d = new Date(movimientoAEditar.fecha);
+                    d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    dateStr = `${year}-${month}-${day}`;
+                }
+                setFecha(dateStr);
+
+                // FIX 2: Postgres envía "metodopago_id" todo en minúsculas
+                setMetodoPagoId(movimientoAEditar.metodopago_id || movimientoAEditar.metodoPago_id || '');
 
                 if (movimientoAEditar.tipo === 'ingreso') {
                     setCliente(movimientoAEditar.detalle || '');
@@ -58,9 +71,11 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
         setCliente(''); setCuentaId(''); setDetalle(''); setOrigenId(''); setMetodoPagoId('');
     };
 
+    // FIX 3: Parsear correctamente el monto que viene directo de la base de datos
     const formatCurrencyInput = (value) => {
         if (value === null || value === undefined || value === '') return '';
-        const num = typeof value === 'number' ? value : Number(String(value).replace(/\./g, '').replace(/,/g, '.'));
+        // Convertimos directamente a Float para evitar que el string "21600.00" pierda su punto decimal
+        const num = typeof value === 'number' ? value : parseFloat(value);
         if (isNaN(num)) return '';
         return new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
     };
