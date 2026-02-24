@@ -25,8 +25,8 @@ const getMovimientos = async (req, res, next) => {
             SELECT e.id, e.fecha, e.importe as monto, e.detalle, 
                    o.nombre as origen, e.origen_id, 
                    m.nombre as metodo_pago, e.metodoPago_id,
-                   i.registradoPor,
-                   i.fecha_registro, 
+                   e.registradoPor,
+                   e.fecha_registro, 
                    'egreso' as tipo
             FROM egresos e
             LEFT JOIN origenes o ON e.origen_id = o.id
