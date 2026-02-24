@@ -44,12 +44,12 @@ export default function Transacciones() {
     const confirmDelete = async () => {
         if (!itemToDelete) return;
         setIsDeleting(true);
-        
+
         try {
             await api.delete(`/transacciones/${itemToDelete.tipo}/${itemToDelete.id}`);
             setShowDeleteSuccess(true);
             setTimeout(() => setShowDeleteSuccess(false), 2000);
-            fetchMovimientos(); 
+            fetchMovimientos();
         } catch (error) {
             alert('Error al eliminar: ' + error.message);
         } finally {
@@ -70,10 +70,18 @@ export default function Transacciones() {
         date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
         return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
     };
+    const formatDateTime = (dateStr) => {
+        if (!dateStr) return '-';
+        const date = new Date(dateStr);
+        return date.toLocaleString('es-AR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    };
 
     return (
         <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-background-light dark:bg-background-dark relative">
-            
+
             {showDeleteSuccess && (
                 <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 md:gap-3 bg-emerald-500 text-white px-6 md:px-8 py-3 md:py-3.5 rounded-xl md:rounded-2xl shadow-2xl shadow-emerald-500/30 transform transition-all animate-bounce text-sm md:text-base">
                     <span className="material-symbols-outlined text-2xl md:text-3xl">delete_sweep</span>
@@ -90,7 +98,7 @@ export default function Transacciones() {
                         </div>
                         <h3 className="text-xl md:text-2xl font-extrabold text-slate-900 mb-2">¿Eliminar registro?</h3>
                         <p className="text-sm md:text-base text-slate-500 mb-6 md:mb-8 font-medium">Esta acción es permanente y no podrás recuperar los datos.</p>
-                        
+
                         <div className="flex gap-3 md:gap-4 w-full">
                             <button onClick={() => setItemToDelete(null)} disabled={isDeleting} className="flex-1 py-2.5 md:py-3 px-4 rounded-xl md:rounded-2xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95 text-sm md:text-base">
                                 Cancelar
@@ -104,7 +112,7 @@ export default function Transacciones() {
             )}
 
             <div className="max-w-7xl mx-auto flex flex-col gap-6 md:gap-8">
-                
+
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6">
                     <div>
                         <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Historial de Transacciones</h2>
@@ -140,6 +148,7 @@ export default function Transacciones() {
                                         </>
                                     )}
                                     <th className="py-3 md:py-4 px-4 text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider text-right">Monto</th>
+                                    <th className="py-3 md:py-4 px-4 text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider">Fecha Registro</th>
                                     <th className="py-3 md:py-4 pr-6 md:pr-8 pl-4 text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider text-center w-24">Acciones</th>
                                 </tr>
                             </thead>
@@ -152,7 +161,7 @@ export default function Transacciones() {
                                     paginatedData.map((mov) => (
                                         <tr key={`${activeTab}-${mov.id}`} className="hover:bg-slate-50 transition-colors group">
                                             <td className="py-3 md:py-4 pl-6 md:pl-8 pr-4 text-slate-500 font-medium whitespace-nowrap">{formatDate(mov.fecha)}</td>
-                                            
+
                                             {activeTab === 'ingresos' ? (
                                                 <>
                                                     <td className="py-3 md:py-4 px-4 font-bold text-slate-900">{mov.detalle}</td>
@@ -172,7 +181,9 @@ export default function Transacciones() {
                                             <td className={`py-3 md:py-4 px-4 text-right font-extrabold whitespace-nowrap text-base md:text-lg ${activeTab === 'ingresos' ? 'text-emerald-600' : 'text-slate-900'}`}>
                                                 {activeTab === 'ingresos' ? '+' : '-'}{formatCurrency(mov.monto)}
                                             </td>
-                                            
+                                            <td className="py-3 md:py-4 px-4 text-slate-400 text-xs font-medium whitespace-nowrap">
+                                                {formatDateTime(mov.fecha_registro)}
+                                            </td>
                                             <td className="py-3 md:py-4 pr-6 md:pr-8 pl-4 text-center">
                                                 <div className="flex items-center justify-center gap-1.5 md:gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                     <button onClick={() => handleEdit(mov)} className="p-1.5 md:p-2 text-slate-400 hover:text-primary hover:bg-blue-50 rounded-lg md:rounded-xl transition-colors" title="Editar">
@@ -211,10 +222,10 @@ export default function Transacciones() {
                     )}
                 </div>
             </div>
-            
-            <MovimientoModal 
-                isOpen={isModalOpen} 
-                onClose={() => { setIsModalOpen(false); setMovimientoAEditar(null); }} 
+
+            <MovimientoModal
+                isOpen={isModalOpen}
+                onClose={() => { setIsModalOpen(false); setMovimientoAEditar(null); }}
                 onSaved={fetchMovimientos}
                 movimientoAEditar={movimientoAEditar}
             />

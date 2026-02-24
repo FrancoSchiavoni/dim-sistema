@@ -10,7 +10,9 @@ const getMovimientos = async (req, res, next) => {
         const sqlIngresos = `
             SELECT i.id, i.fecha, i.importe as monto, i.cliente as detalle, 
                    c.nombre as cuenta, i.cuenta_id, 
-                   m.nombre as metodo_pago, i.metodoPago_id, 
+                   m.nombre as metodo_pago, i.metodoPago_id,
+                   i.registradoPor,
+                   i.fecha_registro, 
                    'ingreso' as tipo
             FROM ingresos i
             LEFT JOIN cuentas c ON i.cuenta_id = c.id
@@ -22,7 +24,9 @@ const getMovimientos = async (req, res, next) => {
         const sqlEgresos = `
             SELECT e.id, e.fecha, e.importe as monto, e.detalle, 
                    o.nombre as origen, e.origen_id, 
-                   m.nombre as metodo_pago, e.metodoPago_id, 
+                   m.nombre as metodo_pago, e.metodoPago_id,
+                   i.registradoPor,
+                   i.fecha_registro, 
                    'egreso' as tipo
             FROM egresos e
             LEFT JOIN origenes o ON e.origen_id = o.id
