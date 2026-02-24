@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import MovimientoModal from '../components/MovimientoModal';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 
 // Utilidad para obtener fechas en formato YYYY-MM-DD sin problemas de zona horaria local
@@ -11,9 +11,9 @@ const formatDateObj = (date) => {
 };
 
 export default function Dashboard() {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const navigate = useNavigate(); // <-- Agregamos el hook de navegación
     const [loading, setLoading] = useState(true);
-    const [activeFilter, setActiveFilter] = useState('mes'); // hoy, semana, mes, custom
+    const [activeFilter, setActiveFilter] = useState('mes'); // hoy, semana, mes, todo, custom
     
     const [desde, setDesde] = useState(() => {
         const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
@@ -68,6 +68,9 @@ export default function Dashboard() {
             const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
             setDesde(formatDateObj(firstDay));
             setHasta(formatDateObj(lastDay));
+        } else if (type === 'todo') {
+            setDesde('2000-01-01');
+            setHasta('2100-12-31');
         }
     };
 
@@ -87,7 +90,6 @@ export default function Dashboard() {
                 <h4 className="text-base md:text-lg font-bold text-slate-800 dark:text-slate-100">{title}</h4>
             </div>
             
-            {/* Contenedor con altura máxima y scroll interno para no desarmar el layout */}
             <div className="overflow-y-auto max-h-[180px] md:max-h-[220px] pr-2 flex-1 scrollbar-thin scrollbar-thumb-slate-200">
                 {loading ? (
                     <p className="text-sm text-slate-500 py-4 text-center">Cargando datos...</p>
@@ -128,8 +130,9 @@ export default function Dashboard() {
                         <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm md:text-base">Vista general del rendimiento financiero</p>
                     </div>
                     
+                    {/* Botón modificado para redirigir en lugar de abrir el modal */}
                     <button 
-                        onClick={() => setIsModalOpen(true)} 
+                        onClick={() => navigate('/movimientos')} 
                         className="w-full md:w-auto bg-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/30 transition-all hover:-translate-y-0.5 active:scale-95"
                     >
                         <span className="material-symbols-outlined text-[20px]">add_circle</span>
@@ -137,23 +140,20 @@ export default function Dashboard() {
                     </button>
                 </div>
 
-                {/* Controles de Filtro Modernos */}
                 <div className="bg-white dark:bg-slate-900 p-2 md:p-3 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col xl:flex-row items-center justify-between gap-4">
                     
-                    {/* Botones de Filtro Rápido */}
-                    <div className="flex w-full xl:w-auto bg-slate-100 p-1 md:p-1.5 rounded-xl">
-                        {['hoy', 'semana', 'mes'].map((filter) => (
+                    <div className="flex flex-wrap w-full xl:w-auto bg-slate-100 p-1 md:p-1.5 rounded-xl">
+                        {['hoy', 'semana', 'mes', 'todo'].map((filter) => (
                             <button 
                                 key={filter}
                                 onClick={() => handleQuickFilter(filter)}
-                                className={`flex-1 xl:flex-none px-4 md:px-6 py-2 rounded-lg text-xs md:text-sm font-bold capitalize transition-all ${activeFilter === filter ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`flex-1 xl:flex-none px-2 sm:px-4 md:px-5 py-2 rounded-lg text-xs md:text-sm font-bold capitalize transition-all ${activeFilter === filter ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
                             >
-                                {filter === 'hoy' ? 'Hoy' : filter === 'semana' ? 'Esta Semana' : 'Este Mes'}
+                                {filter === 'hoy' ? 'Hoy' : filter === 'semana' ? 'Esta Semana' : filter === 'mes' ? 'Este Mes' : 'Todo'}
                             </button>
                         ))}
                     </div>
 
-                    {/* Inputs de Rango (Desde - Hasta) */}
                     <div className="flex flex-col sm:flex-row items-center gap-2 md:gap-4 w-full xl:w-auto px-2">
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                             <span className="text-xs md:text-sm text-slate-400 font-bold uppercase tracking-wider">Desde</span>
@@ -167,10 +167,8 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Layout Principal: Izquierda (Ingresos) vs Derecha (Egresos) */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 pt-2">
                     
-                    {/* COLUMNA INGRESOS */}
                     <div className="flex flex-col gap-4 md:gap-5 bg-emerald-50/50 p-4 md:p-6 rounded-3xl border border-emerald-100/50">
                         <div className="flex items-center gap-2 md:gap-3 px-1">
                             <div className="bg-emerald-100 text-emerald-600 p-1.5 rounded-lg flex items-center justify-center">
@@ -182,7 +180,6 @@ export default function Dashboard() {
                         <MetricList title="Ingresos por Forma de Pago" data={metrics.ingresosMetodo} icon="payments" isIncome={true} />
                     </div>
 
-                    {/* COLUMNA EGRESOS */}
                     <div className="flex flex-col gap-4 md:gap-5 bg-rose-50/50 p-4 md:p-6 rounded-3xl border border-rose-100/50">
                         <div className="flex items-center gap-2 md:gap-3 px-1">
                             <div className="bg-rose-100 text-rose-600 p-1.5 rounded-lg flex items-center justify-center">
@@ -197,12 +194,6 @@ export default function Dashboard() {
                 </div>
 
             </div>
-
-            <MovimientoModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                onSaved={fetchMetrics}
-            />
         </div>
     );
 }

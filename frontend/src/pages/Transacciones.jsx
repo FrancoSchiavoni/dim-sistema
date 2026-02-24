@@ -1,13 +1,24 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import MovimientoModal from '../components/MovimientoModal';
 
+// Utilidad para obtener fechas en formato YYYY-MM-DD sin problemas de zona horaria local
+const formatDateObj = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 export default function Transacciones() {
+    const navigate = useNavigate();
     const [movimientos, setMovimientos] = useState({ ingresos: [], egresos: [] });
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('ingresos');
+    const [activeFilter, setActiveFilter] = useState('mes'); // hoy, semana, mes, todo, custom
 
-    // Estados para el filtro de fechas (Igual que en Dashboard)
+    // Estados para el filtro de fechas
     const [desde, setDesde] = useState(() => {
         const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
     });
@@ -25,7 +36,6 @@ export default function Transacciones() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [movimientoAEditar, setMovimientoAEditar] = useState(null);
 
-    // Actualizamos la consulta para enviar las fechas a la API
     const fetchMovimientos = async () => {
         setLoading(true);
         try {
@@ -38,9 +48,41 @@ export default function Transacciones() {
         }
     };
 
-    // Escuchamos los cambios en las fechas para recargar la tabla
     useEffect(() => { fetchMovimientos(); }, [desde, hasta]);
     useEffect(() => { setCurrentPage(1); }, [activeTab, itemsPerPage]);
+
+    // Lógica de Filtros Rápidos (Idéntica al Dashboard)
+    const handleQuickFilter = (type) => {
+        const today = new Date();
+        setActiveFilter(type);
+        
+        if (type === 'hoy') {
+            const todayStr = formatDateObj(today);
+            setDesde(todayStr);
+            setHasta(todayStr);
+        } else if (type === 'semana') {
+            const day = today.getDay() || 7;
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - day + 1);
+            const sunday = new Date(today);
+            sunday.setDate(monday.getDate() + 6);
+            setDesde(formatDateObj(monday));
+            setHasta(formatDateObj(sunday));
+        } else if (type === 'mes') {
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            setDesde(formatDateObj(firstDay));
+            setHasta(formatDateObj(lastDay));
+        } else if (type === 'todo') {
+            setDesde('2000-01-01');
+            setHasta('2100-12-31');
+        }
+    };
+
+    const handleCustomDateChange = (setter, value) => {
+        setActiveFilter('custom');
+        setter(value);
+    };
 
     const handleEdit = (movimiento) => {
         setMovimientoAEditar(movimiento);
@@ -68,29 +110,22 @@ export default function Transacciones() {
         }
     };
 
-    // --- FUNCIÓN PARA DESCARGAR EXCEL (CSV optimizado) ---
     const handleExportExcel = () => {
         const dataToExport = movimientos[activeTab];
         if (dataToExport.length === 0) return alert('No hay datos en este período para exportar.');
 
-        // Carácter especial (BOM) para que Excel en español reconozca tildes y ñ
         let csvContent = '\uFEFF';
-
-        // Definir Cabeceras
         const headers = activeTab === 'ingresos'
             ? ['Fecha', 'Cliente', 'Cuenta Destino', 'Forma de Cobro', 'Monto', 'Fecha de Registro', 'Cargado por']
             : ['Fecha', 'Detalle', 'Categoría (Origen)', 'Método de Pago', 'Monto', 'Fecha de Registro', 'Cargado por'];
 
         csvContent += headers.join(';') + '\n';
 
-        // Llenar Filas
         dataToExport.forEach(mov => {
             const d = new Date(mov.fecha);
             d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
             const fechaLimpia = d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-
             const fechaRegistroLimpia = mov.fecha_registro ? new Date(mov.fecha_registro).toLocaleString('es-AR') : '';
-            // Formatear monto para que Excel en Argentina entienda los decimales (con coma)
             const montoFormateado = String(mov.monto).replace('.', ',');
 
             const row = [
@@ -103,12 +138,10 @@ export default function Transacciones() {
                 mov.registrador || ''
             ];
 
-            // Envolver cada valor en comillas dobles y escapar contenido interno para evitar errores
             const cleanRow = row.map(item => `"${String(item).replace(/"/g, '""')}"`);
             csvContent += cleanRow.join(';') + '\n';
         });
 
-        // Crear archivo descargable
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -141,9 +174,8 @@ export default function Transacciones() {
     };
 
     return (
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-background-light dark:bg-background-dark relative">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-background-light dark:bg-background-dark relative">
 
-            {/* Modales de Notificación y Borrado... (Se mantienen iguales) */}
             {showDeleteSuccess && (
                 <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 md:gap-3 bg-emerald-500 text-white px-6 md:px-8 py-3 md:py-3.5 rounded-xl md:rounded-2xl shadow-2xl shadow-emerald-500/30 transform transition-all animate-bounce text-sm md:text-base">
                     <span className="material-symbols-outlined text-2xl md:text-3xl">delete_sweep</span>
@@ -173,38 +205,73 @@ export default function Transacciones() {
                 </div>
             )}
 
-            <div className="max-w-7xl mx-auto flex flex-col gap-6 md:gap-8">
+            <div className="max-w-7xl mx-auto flex flex-col gap-6">
 
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Historial de Transacciones</h2>
+                        <p className="text-slate-500 mt-1 text-sm md:text-base">Listado detallado de todos los movimientos</p>
+                    </div>
+                    
+                    <button 
+                        onClick={() => navigate('/movimientos')} 
+                        className="w-full md:w-auto bg-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/30 transition-all hover:-translate-y-0.5 active:scale-95"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">add_circle</span>
+                        <span>Nueva Transacción</span>
+                    </button>
+                </div>
+
+                {/* Controles de Filtro Modernos (Estilo Dashboard) */}
+                <div className="bg-white dark:bg-slate-900 p-2 md:p-3 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col xl:flex-row items-center justify-between gap-4">
+                    
+                    {/* Botones de Filtro Rápido */}
+                    <div className="flex flex-wrap w-full xl:w-auto bg-slate-100 p-1 md:p-1.5 rounded-xl">
+                        {['hoy', 'semana', 'mes', 'todo'].map((filter) => (
+                            <button 
+                                key={filter}
+                                onClick={() => handleQuickFilter(filter)}
+                                className={`flex-1 xl:flex-none px-2 sm:px-4 md:px-5 py-2 rounded-lg text-xs md:text-sm font-bold capitalize transition-all ${activeFilter === filter ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                {filter === 'hoy' ? 'Hoy' : filter === 'semana' ? 'Esta Semana' : filter === 'mes' ? 'Este Mes' : 'Todo'}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Inputs de Rango (Desde - Hasta) */}
+                    <div className="flex flex-col sm:flex-row items-center gap-2 md:gap-4 w-full xl:w-auto px-2">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <span className="text-xs md:text-sm text-slate-400 font-bold uppercase tracking-wider">Desde</span>
+                            <input type="date" value={desde} onChange={(e) => handleCustomDateChange(setDesde, e.target.value)} className="flex-1 sm:flex-none px-3 py-1.5 md:py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/50 bg-white text-slate-700 font-medium" />
+                        </div>
+                        <div className="hidden sm:block text-slate-300">-</div>
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <span className="text-xs md:text-sm text-slate-400 font-bold uppercase tracking-wider">Hasta</span>
+                            <input type="date" value={hasta} onChange={(e) => handleCustomDateChange(setHasta, e.target.value)} className="flex-1 sm:flex-none px-3 py-1.5 md:py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/50 bg-white text-slate-700 font-medium" />
+                        </div>
                     </div>
                 </div>
 
-                {/* NUEVO: Contenedor de Filtros de Fecha */}
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl md:rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center gap-4">
-                    <div className="flex items-center gap-2 md:gap-3 w-full sm:w-auto">
-                        <span className="text-sm md:text-base text-slate-500 font-semibold">Desde:</span>
-                        <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="px-3 md:px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-primary/50 bg-slate-50 dark:bg-slate-800 dark:text-white w-full sm:w-auto" />
-                    </div>
-                    <div className="flex items-center gap-2 md:gap-3 w-full sm:w-auto">
-                        <span className="text-sm md:text-base text-slate-500 font-semibold">Hasta:</span>
-                        <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="px-3 md:px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-primary/50 bg-slate-50 dark:bg-slate-800 dark:text-white w-full sm:w-auto" />
-                    </div>
-                </div>
-
-                {/* NUEVO: Contenedor de Pestañas y Botón Exportar */}
+                {/* Contenedor de Pestañas y Exportar */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex space-x-2 bg-slate-200/50 p-1 md:p-1.5 rounded-xl md:rounded-2xl w-fit">
-                        <button onClick={() => setActiveTab('ingresos')} className={`flex items-center gap-1.5 md:gap-2 px-6 md:px-8 py-2 md:py-2.5 text-sm md:text-base font-bold rounded-lg md:rounded-xl transition-all ${activeTab === 'ingresos' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}>
+                    
+                    {/* Pestañas de Navegación Rediseñadas */}
+                    <div className="flex w-full sm:w-auto bg-slate-100 p-1 md:p-1.5 rounded-xl">
+                        <button 
+                            onClick={() => setActiveTab('ingresos')} 
+                            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 md:gap-2 px-6 md:px-8 py-2 md:py-2.5 text-sm md:text-base font-bold rounded-lg transition-all ${activeTab === 'ingresos' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
                             <span className="material-symbols-outlined text-[18px] md:text-[20px]">arrow_downward</span> Ingresos
                         </button>
-                        <button onClick={() => setActiveTab('egresos')} className={`flex items-center gap-1.5 md:gap-2 px-6 md:px-8 py-2 md:py-2.5 text-sm md:text-base font-bold rounded-lg md:rounded-xl transition-all ${activeTab === 'egresos' ? 'bg-white shadow-sm text-rose-500' : 'text-slate-500 hover:text-slate-700'}`}>
+                        <button 
+                            onClick={() => setActiveTab('egresos')} 
+                            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 md:gap-2 px-6 md:px-8 py-2 md:py-2.5 text-sm md:text-base font-bold rounded-lg transition-all ${activeTab === 'egresos' ? 'bg-white shadow-sm text-rose-600' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
                             <span className="material-symbols-outlined text-[18px] md:text-[20px]">arrow_upward</span> Egresos
                         </button>
                     </div>
 
-                    <button onClick={handleExportExcel} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white shadow-md transition-all active:scale-95 text-sm md:text-base ${activeTab === 'ingresos' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'}`}>
+                    <button onClick={handleExportExcel} className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white shadow-md transition-all active:scale-95 text-sm md:text-base ${activeTab === 'ingresos' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'}`}>
                         <span className="material-symbols-outlined">download</span>
                         Exportar {activeTab === 'ingresos' ? 'Ingresos' : 'Egresos'}
                     </button>
@@ -239,7 +306,7 @@ export default function Transacciones() {
                                 {loading ? (
                                     <tr><td colSpan="8" className="text-center py-8 md:py-12 text-slate-500 text-sm md:text-lg">Cargando datos...</td></tr>
                                 ) : paginatedData.length === 0 ? (
-                                    <tr><td colSpan="8" className="text-center py-8 md:py-12 text-slate-500 text-sm md:text-lg">No hay {activeTab} registrados en estas fechas.</td></tr>
+                                    <tr><td colSpan="8" className="text-center py-8 md:py-12 text-slate-500 text-sm md:text-lg bg-slate-50/50 font-medium">No hay {activeTab} registrados en este período.</td></tr>
                                 ) : (
                                     paginatedData.map((mov) => (
                                         <tr key={`${activeTab}-${mov.id}`} className="hover:bg-slate-50 transition-colors group">
@@ -314,6 +381,7 @@ export default function Transacciones() {
                 </div>
             </div>
 
+            {/* El modal se mantiene EXCLUSIVAMENTE para la edición de registros existentes */}
             <MovimientoModal
                 isOpen={isModalOpen}
                 onClose={() => { setIsModalOpen(false); setMovimientoAEditar(null); }}
