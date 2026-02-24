@@ -74,18 +74,21 @@ export default function Transacciones() {
         if (dataToExport.length === 0) return alert('No hay datos en este período para exportar.');
 
         // Carácter especial (BOM) para que Excel en español reconozca tildes y ñ
-        let csvContent = '\uFEFF'; 
-        
+        let csvContent = '\uFEFF';
+
         // Definir Cabeceras
-        const headers = activeTab === 'ingresos' 
+        const headers = activeTab === 'ingresos'
             ? ['Fecha', 'Cliente', 'Cuenta Destino', 'Forma de Cobro', 'Monto', 'Fecha de Registro', 'Cargado por']
             : ['Fecha', 'Detalle', 'Categoría (Origen)', 'Método de Pago', 'Monto', 'Fecha de Registro', 'Cargado por'];
-        
+
         csvContent += headers.join(';') + '\n';
 
         // Llenar Filas
         dataToExport.forEach(mov => {
-            const fechaLimpia = new Date(mov.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const d = new Date(mov.fecha);
+            d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+            const fechaLimpia = d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
             const fechaRegistroLimpia = mov.fecha_registro ? new Date(mov.fecha_registro).toLocaleString('es-AR') : '';
             // Formatear monto para que Excel en Argentina entienda los decimales (con coma)
             const montoFormateado = String(mov.monto).replace('.', ',');
