@@ -149,6 +149,7 @@ export default function Transacciones() {
                                     )}
                                     <th className="py-3 md:py-4 px-4 text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider text-right">Monto</th>
                                     <th className="py-3 md:py-4 px-4 text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider">Fecha Registro</th>
+                                    <th className="py-3 md:py-4 px-4 text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider">Cargado por</th>
                                     <th className="py-3 md:py-4 pr-6 md:pr-8 pl-4 text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider text-center w-24">Acciones</th>
                                 </tr>
                             </thead>
@@ -183,6 +184,14 @@ export default function Transacciones() {
                                             </td>
                                             <td className="py-3 md:py-4 px-4 text-slate-400 text-xs font-medium whitespace-nowrap">
                                                 {formatDateTime(mov.fecha_registro)}
+                                            </td>
+                                            <td className="py-3 md:py-4 px-4 text-slate-600 font-bold text-xs md:text-sm whitespace-nowrap">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] uppercase">
+                                                        {mov.registrador ? mov.registrador.charAt(0) : '?'}
+                                                    </span>
+                                                    {mov.registrador || 'Desconocido'}
+                                                </div>
                                             </td>
                                             <td className="py-3 md:py-4 pr-6 md:pr-8 pl-4 text-center">
                                                 <div className="flex items-center justify-center gap-1.5 md:gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">

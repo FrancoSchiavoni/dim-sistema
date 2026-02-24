@@ -11,12 +11,13 @@ const getMovimientos = async (req, res, next) => {
             SELECT i.id, i.fecha, i.importe as monto, i.cliente as detalle, 
                    c.nombre as cuenta, i.cuenta_id, 
                    m.nombre as metodo_pago, i.metodoPago_id,
-                   i.registradoPor,
+                   u.nombre as registrador,  -- <--- Pedimos el nombre del usuario
                    i.fecha_registro, 
                    'ingreso' as tipo
             FROM ingresos i
             LEFT JOIN cuentas c ON i.cuenta_id = c.id
             LEFT JOIN metodosPago m ON i.metodoPago_id = m.id
+            LEFT JOIN usuarios u ON i.registradopor = u.id -- <--- Unimos con la tabla usuarios
             ${whereClause}
             ORDER BY i.fecha DESC
         `;
@@ -25,12 +26,13 @@ const getMovimientos = async (req, res, next) => {
             SELECT e.id, e.fecha, e.importe as monto, e.detalle, 
                    o.nombre as origen, e.origen_id, 
                    m.nombre as metodo_pago, e.metodoPago_id,
-                   e.registradoPor,
+                   u.nombre as registrador,  -- <--- Pedimos el nombre del usuario
                    e.fecha_registro, 
                    'egreso' as tipo
             FROM egresos e
             LEFT JOIN origenes o ON e.origen_id = o.id
             LEFT JOIN metodosPago m ON e.metodoPago_id = m.id
+            LEFT JOIN usuarios u ON e.registradopor = u.id -- <--- Unimos con la tabla usuarios
             ${egresosWhereClause}
             ORDER BY e.fecha DESC
         `;
