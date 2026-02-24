@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 
-// Utilidad para obtener fechas en formato YYYY-MM-DD sin problemas de zona horaria local
 const formatDateObj = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -11,9 +10,9 @@ const formatDateObj = (date) => {
 };
 
 export default function Dashboard() {
-    const navigate = useNavigate(); // <-- Agregamos el hook de navegación
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
-    const [activeFilter, setActiveFilter] = useState('mes'); // hoy, semana, mes, todo, custom
+    const [activeFilter, setActiveFilter] = useState('mes');
     
     const [desde, setDesde] = useState(() => {
         const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
@@ -56,7 +55,7 @@ export default function Dashboard() {
             setDesde(todayStr);
             setHasta(todayStr);
         } else if (type === 'semana') {
-            const day = today.getDay() || 7; // Domingo es 7
+            const day = today.getDay() || 7;
             const monday = new Date(today);
             monday.setDate(today.getDate() - day + 1);
             const sunday = new Date(today);
@@ -79,6 +78,18 @@ export default function Dashboard() {
         setter(value);
     };
 
+    // --- NUEVA FUNCIÓN: Navegar con filtros ---
+    const handleRowClick = (label, isIncome) => {
+        navigate('/transacciones', {
+            state: {
+                tab: isIncome ? 'ingresos' : 'egresos',
+                filterText: label,
+                desde: desde,
+                hasta: hasta
+            }
+        });
+    };
+
     const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
 
     const MetricList = ({ title, data = [], icon, isIncome }) => (
@@ -90,7 +101,7 @@ export default function Dashboard() {
                 <h4 className="text-base md:text-lg font-bold text-slate-800 dark:text-slate-100">{title}</h4>
             </div>
             
-            <div className="overflow-y-auto max-h-[180px] md:max-h-[220px] pr-2 flex-1 scrollbar-thin scrollbar-thumb-slate-200">
+            <div className="overflow-y-auto max-h-[180px] md:max-h-[220px] flex-1 scrollbar-thin scrollbar-thumb-slate-200 pr-1">
                 {loading ? (
                     <p className="text-sm text-slate-500 py-4 text-center">Cargando datos...</p>
                 ) : data.length === 0 ? (
@@ -98,9 +109,15 @@ export default function Dashboard() {
                         Sin movimientos
                     </p>
                 ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-1">
                         {data.map((item, index) => (
-                            <div key={index} className="flex justify-between items-center border-b border-slate-50 pb-2 last:border-0 last:pb-0">
+                            // La fila ahora es un botón clickeable
+                            <div 
+                                key={index} 
+                                onClick={() => handleRowClick(item.label, isIncome)}
+                                className="flex justify-between items-center border-b border-slate-50 dark:border-slate-800 pb-2 pt-2 px-2 -mx-2 last:border-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                title="Ver detalle de transacciones"
+                            >
                                 <span className="text-sm font-medium text-slate-600 dark:text-slate-300 truncate pr-2">{item.label}</span>
                                 <span className={`font-bold text-sm whitespace-nowrap ${isIncome ? 'text-emerald-600' : 'text-slate-900 dark:text-white'}`}>
                                     {formatCurrency(item.total)}
@@ -111,7 +128,7 @@ export default function Dashboard() {
                 )}
             </div>
             
-            <div className="pt-3 mt-3 flex justify-between items-center border-t-2 border-slate-50 dark:border-slate-800">
+            <div className="pt-3 mt-3 flex justify-between items-center border-t-2 border-slate-50 dark:border-slate-800 px-2 -mx-2">
                 <span className="text-sm font-extrabold text-slate-700 dark:text-slate-300">Total:</span>
                 <span className={`font-black text-lg ${isIncome ? 'text-emerald-600' : 'text-rose-600'}`}>
                     {formatCurrency(data.reduce((acc, cur) => acc + Number(cur.total), 0))}
@@ -130,7 +147,6 @@ export default function Dashboard() {
                         <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm md:text-base">Vista general del rendimiento financiero</p>
                     </div>
                     
-                    {/* Botón modificado para redirigir en lugar de abrir el modal */}
                     <button 
                         onClick={() => navigate('/movimientos')} 
                         className="w-full md:w-auto bg-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/30 transition-all hover:-translate-y-0.5 active:scale-95"

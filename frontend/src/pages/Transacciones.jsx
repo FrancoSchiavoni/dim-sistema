@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import MovimientoModal from '../components/MovimientoModal';
 
-// Utilidad para obtener fechas en formato YYYY-MM-DD sin problemas de zona horaria local
 const formatDateObj = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -13,16 +12,22 @@ const formatDateObj = (date) => {
 
 export default function Transacciones() {
     const navigate = useNavigate();
+    const location = useLocation(); // <--- ATRAPAMOS LA INFO DEL DASHBOARD
+
     const [movimientos, setMovimientos] = useState({ ingresos: [], egresos: [] });
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('ingresos');
-    const [activeFilter, setActiveFilter] = useState('mes'); // hoy, semana, mes, todo, custom
+    
+    // Si venimos del Dashboard, inicializamos con esos filtros
+    const [activeTab, setActiveTab] = useState(location.state?.tab || 'ingresos');
+    const [activeFilter, setActiveFilter] = useState('mes');
+    const [searchTerm, setSearchTerm] = useState(location.state?.filterText || '');
 
-    // Estados para el filtro de fechas
     const [desde, setDesde] = useState(() => {
+        if (location.state?.desde) return location.state.desde;
         const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
     });
     const [hasta, setHasta] = useState(() => {
+        if (location.state?.hasta) return location.state.hasta;
         const d = new Date(); return new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
     });
 
@@ -49,9 +54,8 @@ export default function Transacciones() {
     };
 
     useEffect(() => { fetchMovimientos(); }, [desde, hasta]);
-    useEffect(() => { setCurrentPage(1); }, [activeTab, itemsPerPage]);
+    useEffect(() => { setCurrentPage(1); }, [activeTab, itemsPerPage, searchTerm]); // Reiniciar pág al buscar
 
-    // Lógica de Filtros Rápidos (Idéntica al Dashboard)
     const handleQuickFilter = (type) => {
         const today = new Date();
         setActiveFilter(type);
@@ -110,9 +114,37 @@ export default function Transacciones() {
         }
     };
 
+    // --- LÓGICA DE FILTRADO LOCAL (SEARCH BAR) ---
+    const getFilteredData = () => {
+        const data = movimientos[activeTab] || [];
+        if (!searchTerm) return data;
+        
+        const searchLower = searchTerm.toLowerCase();
+        return data.filter(mov => {
+            const cuentaMatch = (mov.cuenta || 'Sin Asignar N/A').toLowerCase();
+            const origenMatch = (mov.origen || 'Sin Asignar N/A').toLowerCase();
+            const metodoMatch = (mov.metodo_pago || 'Sin Asignar N/A').toLowerCase();
+            const detalleMatch = (mov.detalle || '').toLowerCase();
+            const registradorMatch = (mov.registrador || '').toLowerCase();
+            
+            return (
+                detalleMatch.includes(searchLower) ||
+                cuentaMatch.includes(searchLower) ||
+                origenMatch.includes(searchLower) ||
+                metodoMatch.includes(searchLower) ||
+                registradorMatch.includes(searchLower)
+            );
+        });
+    };
+
+    const activeData = getFilteredData();
+    const totalItems = activeData.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedData = activeData.slice(startIndex, startIndex + itemsPerPage);
+
     const handleExportExcel = () => {
-        const dataToExport = movimientos[activeTab];
-        if (dataToExport.length === 0) return alert('No hay datos en este período para exportar.');
+        if (activeData.length === 0) return alert('No hay datos en este período para exportar.');
 
         let csvContent = '\uFEFF';
         const headers = activeTab === 'ingresos'
@@ -121,7 +153,7 @@ export default function Transacciones() {
 
         csvContent += headers.join(';') + '\n';
 
-        dataToExport.forEach(mov => {
+        activeData.forEach(mov => {
             const d = new Date(mov.fecha);
             d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
             const fechaLimpia = d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -151,12 +183,6 @@ export default function Transacciones() {
         link.click();
         document.body.removeChild(link);
     };
-
-    const activeData = movimientos[activeTab];
-    const totalItems = activeData.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedData = activeData.slice(startIndex, startIndex + itemsPerPage);
 
     const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
     const formatDate = (dateStr) => {
@@ -222,10 +248,9 @@ export default function Transacciones() {
                     </button>
                 </div>
 
-                {/* Controles de Filtro Modernos (Estilo Dashboard) */}
+                {/* Filtros de Fecha */}
                 <div className="bg-white dark:bg-slate-900 p-2 md:p-3 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col xl:flex-row items-center justify-between gap-4">
                     
-                    {/* Botones de Filtro Rápido */}
                     <div className="flex flex-wrap w-full xl:w-auto bg-slate-100 p-1 md:p-1.5 rounded-xl">
                         {['hoy', 'semana', 'mes', 'todo'].map((filter) => (
                             <button 
@@ -238,7 +263,6 @@ export default function Transacciones() {
                         ))}
                     </div>
 
-                    {/* Inputs de Rango (Desde - Hasta) */}
                     <div className="flex flex-col sm:flex-row items-center gap-2 md:gap-4 w-full xl:w-auto px-2">
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                             <span className="text-xs md:text-sm text-slate-400 font-bold uppercase tracking-wider">Desde</span>
@@ -252,28 +276,47 @@ export default function Transacciones() {
                     </div>
                 </div>
 
-                {/* Contenedor de Pestañas y Exportar */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                {/* Contenedor: Pestañas + BUSCADOR + Exportar */}
+                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                     
-                    {/* Pestañas de Navegación Rediseñadas */}
-                    <div className="flex w-full sm:w-auto bg-slate-100 p-1 md:p-1.5 rounded-xl">
-                        <button 
-                            onClick={() => setActiveTab('ingresos')} 
-                            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 md:gap-2 px-6 md:px-8 py-2 md:py-2.5 text-sm md:text-base font-bold rounded-lg transition-all ${activeTab === 'ingresos' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
-                        >
-                            <span className="material-symbols-outlined text-[18px] md:text-[20px]">arrow_downward</span> Ingresos
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab('egresos')} 
-                            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 md:gap-2 px-6 md:px-8 py-2 md:py-2.5 text-sm md:text-base font-bold rounded-lg transition-all ${activeTab === 'egresos' ? 'bg-white shadow-sm text-rose-600' : 'text-slate-500 hover:text-slate-700'}`}
-                        >
-                            <span className="material-symbols-outlined text-[18px] md:text-[20px]">arrow_upward</span> Egresos
-                        </button>
+                    <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+                        {/* Pestañas de Navegación */}
+                        <div className="flex w-full sm:w-auto bg-slate-100 p-1 md:p-1.5 rounded-xl">
+                            <button 
+                                onClick={() => { setActiveTab('ingresos'); setSearchTerm(''); }} 
+                                className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 md:gap-2 px-6 py-2 md:py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'ingresos' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                <span className="material-symbols-outlined text-[18px]">arrow_downward</span> Ingresos
+                            </button>
+                            <button 
+                                onClick={() => { setActiveTab('egresos'); setSearchTerm(''); }} 
+                                className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 md:gap-2 px-6 py-2 md:py-2.5 text-sm font-bold rounded-lg transition-all ${activeTab === 'egresos' ? 'bg-white shadow-sm text-rose-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                <span className="material-symbols-outlined text-[18px]">arrow_upward</span> Egresos
+                            </button>
+                        </div>
+
+                        {/* NUEVO: Barra de Búsqueda */}
+                        <div className="relative w-full sm:w-64">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined text-[20px]">search</span>
+                            <input 
+                                type="text" 
+                                placeholder={`Buscar en ${activeTab}...`}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/50 bg-white text-slate-700 font-medium shadow-sm transition-all"
+                            />
+                            {searchTerm && (
+                                <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                                    <span className="material-symbols-outlined text-[18px]">close</span>
+                                </button>
+                            )}
+                        </div>
                     </div>
 
-                    <button onClick={handleExportExcel} className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white shadow-md transition-all active:scale-95 text-sm md:text-base ${activeTab === 'ingresos' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'}`}>
+                    <button onClick={handleExportExcel} className={`w-full lg:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white shadow-md transition-all active:scale-95 text-sm md:text-base ${activeTab === 'ingresos' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'}`}>
                         <span className="material-symbols-outlined">download</span>
-                        Exportar {activeTab === 'ingresos' ? 'Ingresos' : 'Egresos'}
+                        Exportar a Excel
                     </button>
                 </div>
 
@@ -306,7 +349,11 @@ export default function Transacciones() {
                                 {loading ? (
                                     <tr><td colSpan="8" className="text-center py-8 md:py-12 text-slate-500 text-sm md:text-lg">Cargando datos...</td></tr>
                                 ) : paginatedData.length === 0 ? (
-                                    <tr><td colSpan="8" className="text-center py-8 md:py-12 text-slate-500 text-sm md:text-lg bg-slate-50/50 font-medium">No hay {activeTab} registrados en este período.</td></tr>
+                                    <tr>
+                                        <td colSpan="8" className="text-center py-8 md:py-12 text-slate-500 text-sm md:text-lg bg-slate-50/50 font-medium">
+                                            {searchTerm ? 'No se encontraron resultados para la búsqueda.' : `No hay ${activeTab} registrados en este período.`}
+                                        </td>
+                                    </tr>
                                 ) : (
                                     paginatedData.map((mov) => (
                                         <tr key={`${activeTab}-${mov.id}`} className="hover:bg-slate-50 transition-colors group">
@@ -381,7 +428,6 @@ export default function Transacciones() {
                 </div>
             </div>
 
-            {/* El modal se mantiene EXCLUSIVAMENTE para la edición de registros existentes */}
             <MovimientoModal
                 isOpen={isModalOpen}
                 onClose={() => { setIsModalOpen(false); setMovimientoAEditar(null); }}
