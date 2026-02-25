@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import MovimientoModal from '../components/MovimientoModal';
-import toast from 'react-hot-toast'; // <-- IMPORTAMOS TOAST
+import toast from 'react-hot-toast';
 
 const formatDateObj = (date) => {
     const year = date.getFullYear();
@@ -102,7 +102,7 @@ export default function Transacciones() {
 
         try {
             await api.delete(`/transacciones/${itemToDelete.tipo}/${itemToDelete.id}`);
-            toast.success('¡Registro eliminado!'); // <-- TOAST NOTIFICATION
+            toast.success('¡Registro eliminado!');
             fetchMovimientos();
         } catch (error) {
             toast.error('Error al eliminar: ' + error.message);
@@ -184,14 +184,6 @@ export default function Transacciones() {
         date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
         return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
-    const formatDateTime = (dateStr) => {
-        if (!dateStr) return '-';
-        const date = new Date(dateStr);
-        return date.toLocaleString('es-AR', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        });
-    };
 
     return (
         <div className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-5 bg-background-light dark:bg-background-dark relative">
@@ -220,27 +212,27 @@ export default function Transacciones() {
 
             <div className="max-w-7xl mx-auto flex flex-col gap-4">
 
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                     <div>
-                        <h2 className="text-lg md:text-xl font-extrabold text-slate-900 tracking-tight">Historial de Transacciones</h2>
+                        <h2 className="text-lg md:text-xl font-black text-slate-900 tracking-tight">Historial de Transacciones</h2>
                     </div>
                     
                     <button 
                         onClick={() => navigate('/movimientos')} 
-                        className="w-full md:w-auto bg-primary hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95"
+                        className="w-full md:w-auto bg-primary hover:bg-blue-700 text-white px-4 py-2 md:py-1.5 rounded-lg text-xs md:text-sm font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95"
                     >
-                        <span className="material-symbols-outlined text-[16px]">add_circle</span>
+                        <span className="material-symbols-outlined text-[16px] md:text-[18px]">add_circle</span>
                         <span>Nueva Transacción</span>
                     </button>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-1.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col xl:flex-row items-center justify-between gap-3">
-                    <div className="flex flex-wrap w-full xl:w-auto bg-slate-100 p-1 rounded-lg">
+                <div className="bg-white dark:bg-slate-900 p-2 rounded-xl shadow-sm border border-slate-200 flex flex-col xl:flex-row items-center justify-between gap-3">
+                    <div className="flex flex-wrap w-full xl:w-auto bg-slate-100 p-1 rounded-lg border border-slate-200">
                         {['hoy', 'semana', 'mes', 'todo'].map((filter) => (
                             <button 
                                 key={filter}
                                 onClick={() => handleQuickFilter(filter)}
-                                className={`flex-1 xl:flex-none px-3 py-1 rounded-md text-[11px] md:text-xs font-bold capitalize transition-all ${activeFilter === filter ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`flex-1 xl:flex-none px-3 py-1.5 rounded-md text-[11px] md:text-xs font-extrabold capitalize transition-all ${activeFilter === filter ? 'bg-white shadow-sm text-primary ring-1 ring-slate-300' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'}`}
                             >
                                 {filter === 'hoy' ? 'Hoy' : filter === 'semana' ? 'Esta Semana' : filter === 'mes' ? 'Este Mes' : 'Todo'}
                             </button>
@@ -249,133 +241,193 @@ export default function Transacciones() {
 
                     <div className="flex flex-col sm:flex-row items-center gap-2 w-full xl:w-auto px-1">
                         <div className="flex items-center gap-1.5 w-full sm:w-auto">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">Desde</span>
-                            <input type="date" value={desde} onChange={(e) => handleCustomDateChange(setDesde, e.target.value)} className="px-2 py-1 border border-slate-200 rounded-md text-xs focus:ring-1 focus:ring-primary/50 bg-white text-slate-700 font-medium" />
+                            <span className="text-[10px] text-slate-500 font-black uppercase">Desde</span>
+                            <input type="date" value={desde} onChange={(e) => handleCustomDateChange(setDesde, e.target.value)} className="w-full sm:w-auto px-2 py-1.5 border border-slate-300 rounded-md text-xs font-bold focus:ring-2 focus:ring-primary/50 bg-white text-slate-800 shadow-sm" />
                         </div>
-                        <div className="hidden sm:block text-slate-300">-</div>
+                        <div className="hidden sm:block text-slate-400 text-xs font-bold">-</div>
                         <div className="flex items-center gap-1.5 w-full sm:w-auto">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase">Hasta</span>
-                            <input type="date" value={hasta} onChange={(e) => handleCustomDateChange(setHasta, e.target.value)} className="px-2 py-1 border border-slate-200 rounded-md text-xs focus:ring-1 focus:ring-primary/50 bg-white text-slate-700 font-medium" />
+                            <span className="text-[10px] text-slate-500 font-black uppercase">Hasta</span>
+                            <input type="date" value={hasta} onChange={(e) => handleCustomDateChange(setHasta, e.target.value)} className="w-full sm:w-auto px-2 py-1.5 border border-slate-300 rounded-md text-xs font-bold focus:ring-2 focus:ring-primary/50 bg-white text-slate-800 shadow-sm" />
                         </div>
                     </div>
                 </div>
 
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
                     <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                        <div className="flex w-full sm:w-auto bg-slate-100 p-1 rounded-lg">
+                        <div className="flex w-full sm:w-auto bg-slate-100 p-1 rounded-lg border border-slate-200">
                             <button 
                                 onClick={() => { setActiveTab('ingresos'); setSearchTerm(''); }} 
-                                className={`flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-1.5 text-[11px] md:text-xs font-bold rounded-md transition-all ${activeTab === 'ingresos' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-1.5 text-[11px] md:text-xs font-bold rounded-md transition-all ${activeTab === 'ingresos' ? 'bg-white shadow-sm text-emerald-700 ring-1 ring-emerald-200' : 'text-slate-600 hover:text-slate-900'}`}
                             >
                                 <span className="material-symbols-outlined text-[16px]">arrow_downward</span> Ingresos
                             </button>
                             <button 
                                 onClick={() => { setActiveTab('egresos'); setSearchTerm(''); }} 
-                                className={`flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-1.5 text-[11px] md:text-xs font-bold rounded-md transition-all ${activeTab === 'egresos' ? 'bg-white shadow-sm text-rose-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`flex-1 sm:flex-none flex items-center justify-center gap-1 px-4 py-1.5 text-[11px] md:text-xs font-bold rounded-md transition-all ${activeTab === 'egresos' ? 'bg-white shadow-sm text-rose-700 ring-1 ring-rose-200' : 'text-slate-600 hover:text-slate-900'}`}
                             >
                                 <span className="material-symbols-outlined text-[16px]">arrow_upward</span> Egresos
                             </button>
                         </div>
 
                         <div className="relative w-full sm:w-56">
-                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined text-[16px]">search</span>
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined text-[18px]">search</span>
                             <input 
                                 type="text" 
                                 placeholder={`Buscar...`}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-8 pr-8 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-primary/50 bg-white text-slate-700 font-medium shadow-sm transition-all"
+                                className="w-full pl-8 pr-8 py-2 md:py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-primary/50 bg-white text-slate-800 font-medium shadow-sm transition-all"
                             />
                             {searchTerm && (
-                                <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                    <span className="material-symbols-outlined text-[14px]">close</span>
+                                <button onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                                    <span className="material-symbols-outlined text-[16px]">close</span>
                                 </button>
                             )}
                         </div>
                     </div>
 
-                    <button onClick={handleExportExcel} className={`w-full lg:w-auto flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-lg font-bold text-white shadow-sm transition-all active:scale-95 text-xs ${activeTab === 'ingresos' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}`}>
+                    <button onClick={handleExportExcel} className={`w-full lg:w-auto flex items-center justify-center gap-1.5 px-4 py-2 md:py-1.5 rounded-lg font-bold text-white shadow-sm transition-all active:scale-95 text-xs md:text-sm ${activeTab === 'ingresos' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}`}>
                         <span className="material-symbols-outlined text-[16px]">download</span>
-                        Exportar a Excel
+                        Exportar Excel
                     </button>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col overflow-hidden">
-                    <div className="overflow-x-auto">
+                {/* CONTENEDOR PRINCIPAL: Tabla (Desktop) / Tarjetas (Móvil) */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+                    
+                    {/* ===== VISTA MÓVIL (TARJETAS) ===== */}
+                    <div className="md:hidden flex flex-col divide-y divide-slate-100">
+                        {loading ? (
+                            <div className="text-center py-8 text-slate-500 text-sm font-medium">Cargando datos...</div>
+                        ) : paginatedData.length === 0 ? (
+                            <div className="text-center py-8 text-slate-500 text-sm font-medium bg-slate-50">
+                                {searchTerm ? 'No se encontraron resultados.' : `No hay ${activeTab}.`}
+                            </div>
+                        ) : (
+                            paginatedData.map((mov) => (
+                                <div key={`${activeTab}-${mov.id}`} className="p-3.5 flex flex-col gap-2.5 hover:bg-slate-50 active:bg-slate-100 transition-colors">
+                                    {/* Cabecera Tarjeta: Fecha y Usuario */}
+                                    <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold tracking-wide uppercase">
+                                        <span>{formatDate(mov.fecha)}</span>
+                                        <div className="flex items-center gap-1">
+                                            <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[8px] font-black">
+                                                {mov.registrador ? mov.registrador.charAt(0) : '?'}
+                                            </span>
+                                            <span className="truncate max-w-[80px]">{mov.registrador || 'Desc.'}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Cuerpo Tarjeta: Detalle y Monto */}
+                                    <div className="flex justify-between items-start gap-2">
+                                        <span className="font-black text-slate-800 text-sm leading-tight flex-1">
+                                            {mov.detalle}
+                                        </span>
+                                        <span className={`font-black text-sm whitespace-nowrap ${activeTab === 'ingresos' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                                            {activeTab === 'ingresos' ? '+' : '-'}{formatCurrency(mov.monto)}
+                                        </span>
+                                    </div>
+
+                                    {/* Pie Tarjeta: Etiquetas y Acciones */}
+                                    <div className="flex justify-between items-end mt-1">
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {activeTab === 'ingresos' ? (
+                                                <>
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">{mov.cuenta || 'N/A'}</span>
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">{mov.metodo_pago || 'N/A'}</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-100">{mov.origen || 'N/A'}</span>
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">{mov.metodo_pago || 'N/A'}</span>
+                                                </>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <button onClick={() => handleEdit(mov)} className="p-1.5 text-slate-500 hover:text-primary bg-slate-100 hover:bg-blue-50 rounded-md transition-colors shadow-sm border border-slate-200" title="Editar">
+                                                <span className="material-symbols-outlined text-[16px] block">edit</span>
+                                            </button>
+                                            <button onClick={() => promptDelete(mov.id, activeTab)} className="p-1.5 text-slate-500 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 rounded-md transition-colors shadow-sm border border-slate-200" title="Eliminar">
+                                                <span className="material-symbols-outlined text-[16px] block">delete</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* ===== VISTA ESCRITORIO (TABLA) ===== */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-left border-collapse min-w-max">
                             <thead>
-                                <tr className="bg-slate-50 border-b border-slate-100">
-                                    <th className="py-2 px-3 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Fecha</th>
+                                <tr className="bg-slate-50 border-b border-slate-200">
+                                    <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Fecha</th>
                                     {activeTab === 'ingresos' ? (
                                         <>
-                                            <th className="py-2 px-3 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Cliente</th>
-                                            <th className="py-2 px-3 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Destino</th>
-                                            <th className="py-2 px-3 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Medio</th>
+                                            <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Cliente</th>
+                                            <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Destino</th>
+                                            <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Medio</th>
                                         </>
                                     ) : (
                                         <>
-                                            <th className="py-2 px-3 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Detalle</th>
-                                            <th className="py-2 px-3 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Categoría</th>
-                                            <th className="py-2 px-3 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Medio</th>
+                                            <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Detalle</th>
+                                            <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Categoría</th>
+                                            <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Medio</th>
                                         </>
                                     )}
-                                    <th className="py-2 px-3 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Monto</th>
-                                    <th className="py-2 px-3 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Registro</th>
-                                    <th className="py-2 px-3 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Usuario</th>
-                                    <th className="py-2 px-3 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center w-20">Acciones</th>
+                                    <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider text-right">Monto</th>
+                                    <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Usuario</th>
+                                    <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider text-center w-24">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50 text-xs md:text-sm">
+                            <tbody className="divide-y divide-slate-100 text-sm">
                                 {loading ? (
-                                    <tr><td colSpan="8" className="text-center py-6 text-slate-500 text-xs md:text-sm">Cargando datos...</td></tr>
+                                    <tr><td colSpan="7" className="text-center py-6 text-slate-500 text-sm font-medium">Cargando datos...</td></tr>
                                 ) : paginatedData.length === 0 ? (
                                     <tr>
-                                        <td colSpan="8" className="text-center py-6 text-slate-500 text-xs md:text-sm bg-slate-50/50 font-medium">
+                                        <td colSpan="7" className="text-center py-6 text-slate-500 text-sm bg-slate-50/50 font-medium">
                                             {searchTerm ? 'No se encontraron resultados.' : `No hay ${activeTab}.`}
                                         </td>
                                     </tr>
                                 ) : (
                                     paginatedData.map((mov) => (
                                         <tr key={`${activeTab}-${mov.id}`} className="hover:bg-slate-50 transition-colors group">
-                                            <td className="py-1.5 md:py-2 px-3 text-slate-500 font-medium whitespace-nowrap">{formatDate(mov.fecha)}</td>
+                                            <td className="py-2 px-4 text-slate-600 font-bold whitespace-nowrap text-xs">{formatDate(mov.fecha)}</td>
 
                                             {activeTab === 'ingresos' ? (
                                                 <>
-                                                    <td className="py-1.5 md:py-2 px-3 font-bold text-slate-900 max-w-[150px] truncate">{mov.detalle}</td>
-                                                    <td className="py-1.5 md:py-2 px-3 text-slate-600 truncate">{mov.cuenta || 'N/A'}</td>
-                                                    <td className="py-1.5 md:py-2 px-3 text-slate-600 truncate">{mov.metodo_pago || 'N/A'}</td>
+                                                    <td className="py-2 px-4 font-bold text-slate-800 max-w-[180px] truncate">{mov.detalle}</td>
+                                                    <td className="py-2 px-4 text-slate-600 truncate text-xs font-medium">{mov.cuenta || 'N/A'}</td>
+                                                    <td className="py-2 px-4 text-slate-600 truncate text-xs font-medium">{mov.metodo_pago || 'N/A'}</td>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <td className="py-1.5 md:py-2 px-3 font-bold text-slate-900 max-w-[150px] truncate">{mov.detalle}</td>
-                                                    <td className="py-1.5 md:py-2 px-3 text-slate-600 truncate">
-                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] md:text-xs font-bold bg-purple-50 text-purple-700">{mov.origen || 'N/A'}</span>
+                                                    <td className="py-2 px-4 font-bold text-slate-800 max-w-[180px] truncate">{mov.detalle}</td>
+                                                    <td className="py-2 px-4 text-slate-600 truncate">
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-100">{mov.origen || 'N/A'}</span>
                                                     </td>
-                                                    <td className="py-1.5 md:py-2 px-3 text-slate-600 truncate">{mov.metodo_pago || 'N/A'}</td>
+                                                    <td className="py-2 px-4 text-slate-600 truncate text-xs font-medium">{mov.metodo_pago || 'N/A'}</td>
                                                 </>
                                             )}
 
-                                            <td className={`py-1.5 md:py-2 px-3 text-right font-extrabold whitespace-nowrap ${activeTab === 'ingresos' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                                            <td className={`py-2 px-4 text-right font-black whitespace-nowrap ${activeTab === 'ingresos' ? 'text-emerald-700' : 'text-slate-900'}`}>
                                                 {activeTab === 'ingresos' ? '+' : '-'}{formatCurrency(mov.monto)}
                                             </td>
-                                            <td className="py-1.5 md:py-2 px-3 text-slate-400 text-[10px] md:text-xs font-medium whitespace-nowrap">
-                                                {formatDateTime(mov.fecha_registro)}
-                                            </td>
-                                            <td className="py-1.5 md:py-2 px-3 text-slate-600 font-bold text-[10px] md:text-xs whitespace-nowrap">
+                                            <td className="py-2 px-4 text-slate-600 font-bold text-[11px] whitespace-nowrap">
                                                 <div className="flex items-center gap-1.5">
-                                                    <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[9px] uppercase">
+                                                    <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[9px] uppercase border border-slate-300">
                                                         {mov.registrador ? mov.registrador.charAt(0) : '?'}
                                                     </span>
                                                     <span className="truncate max-w-[80px]">{mov.registrador || 'Desc.'}</span>
                                                 </div>
                                             </td>
-                                            <td className="py-1.5 md:py-2 px-3 text-center">
-                                                <div className="flex items-center justify-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={() => handleEdit(mov)} className="p-1 text-slate-400 hover:text-primary hover:bg-blue-50 rounded-md transition-colors" title="Editar">
-                                                        <span className="material-symbols-outlined text-[16px]">edit</span>
+                                            <td className="py-2 px-4 text-center">
+                                                <div className="flex items-center justify-center gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => handleEdit(mov)} className="p-1.5 text-slate-500 hover:text-primary bg-white hover:bg-blue-50 border border-slate-200 rounded-md transition-colors shadow-sm" title="Editar">
+                                                        <span className="material-symbols-outlined text-[14px] block">edit</span>
                                                     </button>
-                                                    <button onClick={() => promptDelete(mov.id, activeTab)} className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors" title="Eliminar">
-                                                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                                                    <button onClick={() => promptDelete(mov.id, activeTab)} className="p-1.5 text-slate-500 hover:text-rose-600 bg-white hover:bg-rose-50 border border-slate-200 rounded-md transition-colors shadow-sm" title="Eliminar">
+                                                        <span className="material-symbols-outlined text-[14px] block">delete</span>
                                                     </button>
                                                 </div>
                                             </td>
@@ -387,20 +439,20 @@ export default function Transacciones() {
                     </div>
 
                     {!loading && totalItems > 0 && (
-                        <div className="px-4 py-2 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 bg-slate-50/50">
-                            <div className="flex items-center gap-2 text-[11px] md:text-xs text-slate-600 font-medium">
+                        <div className="px-4 py-2 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50">
+                            <div className="flex items-center gap-2 text-[11px] md:text-xs text-slate-700 font-bold">
                                 <span>Mostrar</span>
-                                <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className="border border-slate-200 rounded-md bg-white text-slate-900 py-0.5 px-1 outline-none cursor-pointer">
+                                <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className="border border-slate-300 rounded-md bg-white text-slate-900 py-0.5 px-1 outline-none cursor-pointer focus:ring-2 focus:ring-primary/50 shadow-sm">
                                     <option value={10}>10</option><option value={20}>20</option><option value={50}>50</option>
                                 </select>
                                 <span>filas</span>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="text-[10px] md:text-xs font-medium text-slate-500">{startIndex + 1}-{Math.min(startIndex + itemsPerPage, totalItems)} de {totalItems}</span>
+                                <span className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wide">{startIndex + 1}-{Math.min(startIndex + itemsPerPage, totalItems)} de {totalItems}</span>
                                 <div className="flex items-center gap-1">
-                                    <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1} className="p-1 rounded-md border border-slate-200 bg-white hover:text-primary disabled:opacity-50"><span className="material-symbols-outlined text-[16px]">chevron_left</span></button>
-                                    <div className="px-1.5 font-bold text-slate-700 text-[11px] md:text-xs">Pág. {currentPage} / {totalPages}</div>
-                                    <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages} className="p-1 rounded-md border border-slate-200 bg-white hover:text-primary disabled:opacity-50"><span className="material-symbols-outlined text-[16px]">chevron_right</span></button>
+                                    <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1} className="p-1 rounded-md border border-slate-300 bg-white hover:bg-slate-100 text-slate-600 disabled:opacity-50 shadow-sm"><span className="material-symbols-outlined text-[16px] block">chevron_left</span></button>
+                                    <div className="px-1.5 font-black text-slate-800 text-[11px] md:text-xs">Pág. {currentPage} / {totalPages}</div>
+                                    <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages} className="p-1 rounded-md border border-slate-300 bg-white hover:bg-slate-100 text-slate-600 disabled:opacity-50 shadow-sm"><span className="material-symbols-outlined text-[16px] block">chevron_right</span></button>
                                 </div>
                             </div>
                         </div>
