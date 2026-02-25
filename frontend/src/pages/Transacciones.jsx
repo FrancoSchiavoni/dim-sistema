@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import MovimientoModal from '../components/MovimientoModal';
+import toast from 'react-hot-toast'; // <-- IMPORTAMOS TOAST
 
 const formatDateObj = (date) => {
     const year = date.getFullYear();
@@ -30,7 +31,6 @@ export default function Transacciones() {
         const d = new Date(); return new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
     });
 
-    const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -46,7 +46,7 @@ export default function Transacciones() {
             const data = await api.get(`/transacciones?desde=${desde}&hasta=${hasta}`);
             setMovimientos({ ingresos: data.ingresos || [], egresos: data.egresos || [] });
         } catch (error) {
-            console.error('Error cargando transacciones:', error);
+            toast.error('Error cargando transacciones');
         } finally {
             setLoading(false);
         }
@@ -102,11 +102,10 @@ export default function Transacciones() {
 
         try {
             await api.delete(`/transacciones/${itemToDelete.tipo}/${itemToDelete.id}`);
-            setShowDeleteSuccess(true);
-            setTimeout(() => setShowDeleteSuccess(false), 2000);
+            toast.success('¡Registro eliminado!'); // <-- TOAST NOTIFICATION
             fetchMovimientos();
         } catch (error) {
-            alert('Error al eliminar: ' + error.message);
+            toast.error('Error al eliminar: ' + error.message);
         } finally {
             setIsDeleting(false);
             setItemToDelete(null);
@@ -142,7 +141,7 @@ export default function Transacciones() {
     const paginatedData = activeData.slice(startIndex, startIndex + itemsPerPage);
 
     const handleExportExcel = () => {
-        if (activeData.length === 0) return alert('No hay datos en este período para exportar.');
+        if (activeData.length === 0) return toast.error('No hay datos en este período para exportar.');
         let csvContent = '\uFEFF';
         const headers = activeTab === 'ingresos'
             ? ['Fecha', 'Cliente', 'Cuenta Destino', 'Forma de Cobro', 'Monto', 'Fecha de Registro', 'Cargado por']
@@ -197,13 +196,6 @@ export default function Transacciones() {
     return (
         <div className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-5 bg-background-light dark:bg-background-dark relative">
 
-            {showDeleteSuccess && (
-                <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-lg shadow-xl shadow-emerald-500/30 transform transition-all animate-bounce text-xs md:text-sm">
-                    <span className="material-symbols-outlined text-[20px]">delete_sweep</span>
-                    <span className="font-bold tracking-wide">¡Registro eliminado!</span>
-                </div>
-            )}
-
             {itemToDelete && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !isDeleting && setItemToDelete(null)}></div>
@@ -242,7 +234,6 @@ export default function Transacciones() {
                     </button>
                 </div>
 
-                {/* Filtros compactos */}
                 <div className="bg-white dark:bg-slate-900 p-1.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col xl:flex-row items-center justify-between gap-3">
                     <div className="flex flex-wrap w-full xl:w-auto bg-slate-100 p-1 rounded-lg">
                         {['hoy', 'semana', 'mes', 'todo'].map((filter) => (
@@ -269,7 +260,6 @@ export default function Transacciones() {
                     </div>
                 </div>
 
-                {/* Acciones de Tabla Compactas */}
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
                     <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                         <div className="flex w-full sm:w-auto bg-slate-100 p-1 rounded-lg">
@@ -310,7 +300,6 @@ export default function Transacciones() {
                     </button>
                 </div>
 
-                {/* TABLA COMPACTA: Menos px, letras más chicas, sin espacios en blanco innecesarios */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse min-w-max">

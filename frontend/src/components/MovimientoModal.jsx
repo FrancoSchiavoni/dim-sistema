@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
+import toast from 'react-hot-toast'; // <-- IMPORTAMOS
 
 const getTodayDate = () => {
     const d = new Date();
@@ -17,7 +18,6 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
     const [fecha, setFecha] = useState(getTodayDate());
     const importeRef = useRef(null);
     const [loading, setLoading] = useState(false);
-    const [showSuccess, setShowSuccess] = useState(false);
     const [catalogos, setCatalogos] = useState({ cuentas: [], origenes: [], metodosPago: [] });
 
     const [cliente, setCliente] = useState('');
@@ -30,13 +30,12 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
         if (isOpen) {
             api.get('/transacciones/catalogos')
                 .then(data => setCatalogos(data))
-                .catch(err => console.error("Error cargando catálogos:", err));
+                .catch(err => toast.error('Error cargando catálogos'));
 
             if (movimientoAEditar) {
                 setTipo(movimientoAEditar.tipo);
                 setImporte(formatCurrencyInput(movimientoAEditar.monto));
                 
-                // FIX 1: Formatear la fecha a YYYY-MM-DD ajustando la zona horaria
                 let dateStr = getTodayDate();
                 if (movimientoAEditar.fecha) {
                     const d = new Date(movimientoAEditar.fecha);
@@ -48,7 +47,6 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
                 }
                 setFecha(dateStr);
 
-                // FIX 2: Postgres envía "metodopago_id" todo en minúsculas
                 setMetodoPagoId(movimientoAEditar.metodopago_id || movimientoAEditar.metodoPago_id || '');
 
                 if (movimientoAEditar.tipo === 'ingreso') {
@@ -71,10 +69,8 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
         setCliente(''); setCuentaId(''); setDetalle(''); setOrigenId(''); setMetodoPagoId('');
     };
 
-    // FIX 3: Parsear correctamente el monto que viene directo de la base de datos
     const formatCurrencyInput = (value) => {
         if (value === null || value === undefined || value === '') return '';
-        // Convertimos directamente a Float para evitar que el string "21600.00" pierda su punto decimal
         const num = typeof value === 'number' ? value : parseFloat(value);
         if (isNaN(num)) return '';
         return new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
@@ -130,29 +126,19 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
             } else {
                 await api.post('/transacciones', payload);
             }
-            setShowSuccess(true);
-            setTimeout(() => {
-                setShowSuccess(false);
-                handleClose();
-                onSaved();
-            }, 1500);
+            toast.success(isEdit ? '¡Cambios guardados!' : '¡Registro exitoso!'); // <-- TOAST EN VEZ DE ESTADOS
+            handleClose();
+            onSaved();
         } catch (error) {
-            alert('Error al guardar: ' + error.message);
+            toast.error('Error al guardar: ' + error.message);
         } finally { setLoading(false); }
     };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={!loading && !showSuccess ? handleClose : undefined}></div>
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={!loading ? handleClose : undefined}></div>
 
-            {showSuccess && (
-                <div className="absolute top-4 md:top-10 z-[60] flex items-center gap-2 md:gap-3 bg-emerald-500 text-white px-4 md:px-6 py-3 md:py-3.5 rounded-lg md:rounded-xl shadow-2xl shadow-emerald-500/30 transform transition-all animate-bounce text-xs md:text-sm">
-                    <span className="material-symbols-outlined text-xl md:text-2xl">check_circle</span>
-                    <span className="font-bold tracking-wide">{isEdit ? '¡Cambios guardados!' : '¡Registro exitoso!'}</span>
-                </div>
-            )}
-
-            <div className={`relative z-10 w-full max-w-3xl bg-white dark:bg-[#1a2634] rounded-2xl md:rounded-2xl shadow-2xl border-2 overflow-hidden flex flex-col transition-all duration-300 ${showSuccess ? 'opacity-50 pointer-events-none' : 'opacity-100'} ${tipo === 'ingreso' ? 'border-emerald-200' : 'border-rose-200'}`}>
+            <div className={`relative z-10 w-full max-w-3xl bg-white dark:bg-[#1a2634] rounded-2xl md:rounded-2xl shadow-2xl border-2 overflow-hidden flex flex-col transition-all duration-300 ${tipo === 'ingreso' ? 'border-emerald-200' : 'border-rose-200'}`}>
 
                 <div className={`flex items-center justify-between px-4 md:px-8 py-4 md:py-5 border-b-2 ${tipo === 'ingreso' ? 'border-emerald-100 bg-emerald-50/30' : 'border-rose-100 bg-rose-50/30'}`}>
                     <div>
@@ -262,11 +248,11 @@ export default function MovimientoModal({ isOpen, onClose, onSaved, movimientoAE
                     )}
 
                     <div className="pt-4 md:pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-end gap-3 md:gap-4">
-                        <button type="button" onClick={handleClose} disabled={loading || showSuccess}
+                        <button type="button" onClick={handleClose} disabled={loading}
                             className="w-full sm:w-auto px-6 py-2 md:py-2.5 rounded-lg md:rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-all active:scale-95">
                             Cancelar
                         </button>
-                        <button type="submit" disabled={loading || showSuccess}
+                        <button type="submit" disabled={loading}
                             className={`w-full sm:w-auto px-8 py-2 md:py-2.5 rounded-lg md:rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md disabled:opacity-50 transition-all hover:-translate-y-0.5 active:scale-95 ${tipo === 'ingreso' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'}`}>
                             <span className="material-symbols-outlined text-[18px] md:text-[20px]">{loading ? 'sync' : 'check'}</span>
                             <span>{isEdit ? 'Guardar Cambios' : 'Confirmar Registro'}</span>

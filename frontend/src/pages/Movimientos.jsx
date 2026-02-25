@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
+import toast from 'react-hot-toast'; // <-- IMPORTAMOS
 
 const getTodayDate = () => {
     const d = new Date();
@@ -15,7 +16,6 @@ export default function Movimientos() {
     const [fecha, setFecha] = useState(getTodayDate());
     const [loading, setLoading] = useState(false);
     const importeRef = useRef(null);
-    const [showSuccess, setShowSuccess] = useState(false);
     const [catalogos, setCatalogos] = useState({ cuentas: [], origenes: [], metodosPago: [] });
 
     const [cliente, setCliente] = useState('');
@@ -27,7 +27,7 @@ export default function Movimientos() {
     useEffect(() => {
         api.get('/transacciones/catalogos')
             .then(data => setCatalogos(data))
-            .catch(err => console.error('Error cargando catálogos:', err));
+            .catch(err => toast.error('Error cargando catálogos'));
     }, []);
 
     const resetForm = () => {
@@ -76,25 +76,15 @@ export default function Movimientos() {
 
         try {
             await api.post('/transacciones', payload);
-            setShowSuccess(true);
-            setTimeout(() => {
-                setShowSuccess(false);
-                resetForm();
-            }, 1500);
+            toast.success('¡Registro exitoso!'); // <-- USAMOS TOAST AQUÍ
+            resetForm();
         } catch (error) {
-            alert('Error al guardar: ' + error.message);
+            toast.error('Error al guardar: ' + error.message); // <-- Y AQUÍ
         } finally { setLoading(false); }
     };
 
     return (
         <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-background-light dark:bg-background-dark relative">
-            {showSuccess && (
-                <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 md:gap-3 bg-emerald-500 text-white px-4 md:px-6 py-3 md:py-3.5 rounded-xl md:rounded-xl shadow-2xl shadow-emerald-500/30 transform transition-all animate-bounce text-sm md:text-sm">
-                    <span className="material-symbols-outlined text-2xl md:text-2xl">check_circle</span>
-                    <span className="font-bold tracking-wide">Registro exitoso</span>
-                </div>
-            )}
-
             <div className="w-full max-w-4xl mx-auto flex flex-col gap-4 md:gap-6">
                 <div className="flex items-center justify-between">
                     <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Nuevo Movimiento</h2>
@@ -199,11 +189,11 @@ export default function Movimientos() {
                         )}
 
                         <div className="pt-4 md:pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-end gap-3 md:gap-4">
-                            <button type="button" onClick={resetForm} disabled={loading || showSuccess}
+                            <button type="button" onClick={resetForm} disabled={loading}
                                 className="w-full sm:w-auto px-6 py-2.5 rounded-lg md:rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-all active:scale-95">
                                 Limpiar
                             </button>
-                            <button type="submit" disabled={loading || showSuccess}
+                            <button type="submit" disabled={loading}
                                 className={`w-full sm:w-auto px-8 py-2.5 rounded-lg md:rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md disabled:opacity-50 transition-all hover:-translate-y-0.5 active:scale-95 ${tipo === 'ingreso' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'}`}>
                                 <span className="material-symbols-outlined text-[20px]">{loading ? 'sync' : 'check'}</span>
                                 <span>{loading ? 'Guardando...' : 'Confirmar Registro'}</span>
