@@ -22,6 +22,9 @@ export default function Transacciones() {
     const [activeFilter, setActiveFilter] = useState('mes');
     const [searchTerm, setSearchTerm] = useState(location.state?.filterText || '');
 
+    // NUEVO ESTADO: Controla la columna ordenada y la dirección (ascendente/descendente)
+    const [sortConfig, setSortConfig] = useState({ key: 'fecha', direction: 'desc' });
+
     const [desde, setDesde] = useState(() => {
         if (location.state?.desde) return location.state.desde;
         const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
@@ -112,6 +115,15 @@ export default function Transacciones() {
         }
     };
 
+    // LÓGICA DE ORDENAMIENTO (Al hacer clic en una columna)
+    const handleSort = (key) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
     const getFilteredData = () => {
         const data = movimientos[activeTab] || [];
         if (!searchTerm) return data;
@@ -134,7 +146,30 @@ export default function Transacciones() {
         });
     };
 
-    const activeData = getFilteredData();
+    // Aplicamos el filtro y LUEGO el ordenamiento
+    const activeData = getFilteredData().sort((a, b) => {
+        if (!sortConfig.key) return 0;
+        
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+
+        // Reglas específicas según el tipo de dato
+        if (sortConfig.key === 'monto') {
+            aValue = Number(aValue || 0);
+            bValue = Number(bValue || 0);
+        } else if (sortConfig.key === 'fecha' || sortConfig.key === 'fecha_registro') {
+            aValue = new Date(aValue || 0).getTime();
+            bValue = new Date(bValue || 0).getTime();
+        } else {
+            aValue = String(aValue || '').toLowerCase();
+            bValue = String(bValue || '').toLowerCase();
+        }
+
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
     const totalItems = activeData.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -186,7 +221,6 @@ export default function Transacciones() {
         return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
 
-    // Función para formatear la fecha y hora de registro
     const formatDateTime = (dateStr) => {
         if (!dateStr) return '-';
         const date = new Date(dateStr);
@@ -195,6 +229,21 @@ export default function Transacciones() {
             hour: '2-digit', minute: '2-digit'
         });
     };
+
+    // COMPONENTE VISUAL PARA LOS ENCABEZADOS ORDENABLES
+    const SortableHeader = ({ label, columnKey, align = 'left' }) => (
+        <th 
+            onClick={() => handleSort(columnKey)}
+            className={`py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider cursor-pointer hover:bg-slate-200/50 transition-colors group select-none ${align === 'right' ? 'text-right' : 'text-left'}`}
+        >
+            <div className={`flex items-center gap-1 ${align === 'right' ? 'justify-end' : 'justify-start'}`}>
+                {label}
+                <span className={`material-symbols-outlined text-[14px] transition-all ${sortConfig.key === columnKey ? 'text-primary opacity-100' : 'text-slate-400 opacity-0 group-hover:opacity-100'}`}>
+                    {sortConfig.key === columnKey ? (sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'swap_vert'}
+                </span>
+            </div>
+        </th>
+    );
 
     return (
         <div className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-5 bg-background-light dark:bg-background-dark relative">
@@ -316,11 +365,9 @@ export default function Transacciones() {
                         ) : (
                             paginatedData.map((mov) => (
                                 <div key={`${activeTab}-${mov.id}`} className="p-3.5 flex flex-col gap-2.5 hover:bg-slate-50 active:bg-slate-100 transition-colors">
-                                    {/* Cabecera Tarjeta: Fechas y Usuario */}
                                     <div className="flex justify-between items-start text-[10px] text-slate-500 font-bold tracking-wide uppercase">
                                         <div className="flex flex-col">
                                             <span>{formatDate(mov.fecha)}</span>
-                                            {/* Aquí agregamos la fecha de registro en móvil */}
                                             <span className="text-[9px] text-slate-400 font-medium normal-case mt-0.5">Reg: {formatDateTime(mov.fecha_registro)}</span>
                                         </div>
                                         <div className="flex items-center gap-1 mt-0.5">
@@ -373,24 +420,23 @@ export default function Transacciones() {
                         <table className="w-full text-left border-collapse min-w-max">
                             <thead>
                                 <tr className="bg-slate-50 border-b border-slate-200">
-                                    <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Fecha</th>
+                                    <SortableHeader label="Fecha" columnKey="fecha" />
                                     {activeTab === 'ingresos' ? (
                                         <>
-                                            <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Cliente</th>
-                                            <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Destino</th>
-                                            <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Medio</th>
+                                            <SortableHeader label="Cliente" columnKey="detalle" />
+                                            <SortableHeader label="Destino" columnKey="cuenta" />
+                                            <SortableHeader label="Medio" columnKey="metodo_pago" />
                                         </>
                                     ) : (
                                         <>
-                                            <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Detalle</th>
-                                            <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Categoría</th>
-                                            <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Medio</th>
+                                            <SortableHeader label="Detalle" columnKey="detalle" />
+                                            <SortableHeader label="Categoría" columnKey="origen" />
+                                            <SortableHeader label="Medio" columnKey="metodo_pago" />
                                         </>
                                     )}
-                                    <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider text-right">Monto</th>
-                                    {/* Nueva columna para el Registro */}
-                                    <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Registro</th>
-                                    <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Usuario</th>
+                                    <SortableHeader label="Monto" columnKey="monto" align="right" />
+                                    <SortableHeader label="Registro" columnKey="fecha_registro" />
+                                    <SortableHeader label="Usuario" columnKey="registrador" />
                                     <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider text-center w-24">Acciones</th>
                                 </tr>
                             </thead>
@@ -428,7 +474,6 @@ export default function Transacciones() {
                                                 {activeTab === 'ingresos' ? '+' : '-'}{formatCurrency(mov.monto)}
                                             </td>
                                             
-                                            {/* Nuevo campo de fecha de registro (letra más chica para no estorbar) */}
                                             <td className="py-2 px-4 text-slate-400 font-medium text-[10px] whitespace-nowrap">
                                                 {formatDateTime(mov.fecha_registro)}
                                             </td>
