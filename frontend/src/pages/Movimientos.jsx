@@ -178,7 +178,7 @@ export default function Movimientos() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 animate-fade-in">
                                 <div>
                                     <label className={labelClass}>Detalle del Gasto</label>
-                                    <input type="text" value={detalle} onChange={(e) => setDetalle(e.target.value)} required className={inputClass} placeholder="Ej: Compra de insumos" />
+                                    <input type="text" value={detalle} onChange={(e) => setDetalle(e.target.value)} required className={inputClass} />
                                 </div>
                                 <div>
                                     <label className={labelClass}>Forma de Pago</label>
