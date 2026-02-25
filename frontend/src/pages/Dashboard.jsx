@@ -10,18 +10,33 @@ const formatDateObj = (date) => {
     return `${year}-${month}-${day}`;
 };
 
-// 1. Paletas de colores oscurecidas (Tonos más corporativos y profundos)
-const INCOME_COLORS = ['#047857', '#059669', '#0f766e', '#115e59', '#064e3b'];
-const EXPENSE_COLORS = ['#be123c', '#e11d48', '#9f1239', '#881337', '#7f1d1d'];
+// 1. PALETAS DE ALTO CONTRASTE (Manteniendo la seriedad corporativa)
+// Alternamos Oscuro -> Vibrante -> Tono Distinto -> Claro -> Medio
+const INCOME_COLORS = [
+    '#064e3b', // 1. Verde muy oscuro (Casi negro, ancla el gráfico)
+    '#10b981', // 2. Verde vibrante (Contrasta fuerte con el 1ro)
+    '#0f766e', // 3. Verde azulado / Teal oscuro (Separa visualmente)
+    '#6ee7b7', // 4. Verde claro / Menta (Ilumina porciones chicas)
+    '#059669', // 5. Verde medio clásico
+    '#14b8a6'  // 6. Teal medio (Por si hay una 6ta cuenta)
+];
+
+const EXPENSE_COLORS = [
+    '#881337', // 1. Rojo borgoña muy oscuro
+    '#f43f5e', // 2. Rosa/Rojo vibrante
+    '#c2410c', // 3. Rojo óxido / Naranja oscuro (Excelente separador)
+    '#fb7185', // 4. Rosa claro
+    '#e11d48', // 5. Rojo medio clásico
+    '#ea580c'  // 6. Naranja medio
+];
 
 export default function Dashboard() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState('mes');
     
-    // 2. NUEVO: Estados para controlar qué datos muestra el gráfico
-    const [activeIncomeChart, setActiveIncomeChart] = useState('cuenta'); // 'cuenta' | 'metodo'
-    const [activeExpenseChart, setActiveExpenseChart] = useState('origen'); // 'origen' | 'metodo'
+    const [activeIncomeChart, setActiveIncomeChart] = useState('cuenta');
+    const [activeExpenseChart, setActiveExpenseChart] = useState('origen');
 
     const [desde, setDesde] = useState(() => {
         const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
@@ -100,11 +115,12 @@ export default function Dashboard() {
 
     const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
 
-    // Componente de Gráfico con Tooltip oscuro y porcentaje
     const DonutChart = ({ data, colors }) => {
         if (!data || data.length === 0) return null;
         
         const grandTotal = data.reduce((acc, cur) => acc + Number(cur.total), 0);
+        
+        // Ordenamos de mayor a menor para que el color más oscuro vaya al ítem más grande
         const chartData = data.map(item => ({
             name: item.label,
             value: Number(item.total)
@@ -125,7 +141,7 @@ export default function Dashboard() {
                             cy="50%"
                             innerRadius={45}
                             outerRadius={65}
-                            paddingAngle={2}
+                            paddingAngle={2} // Añade una pequeñísima línea blanca entre porciones para ayudar a distinguirlas
                             dataKey="value"
                             stroke="none"
                         >
@@ -137,11 +153,11 @@ export default function Dashboard() {
                             formatter={tooltipFormatter}
                             contentStyle={{ 
                                 borderRadius: '8px', 
-                                border: '1px solid #94a3b8', // Borde más oscuro
+                                border: '1px solid #94a3b8', 
                                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2)', 
                                 fontSize: '12px', 
                                 fontWeight: 'bold',
-                                backgroundColor: '#1e293b', // Fondo casi negro para el tooltip
+                                backgroundColor: '#1e293b', 
                                 color: '#f8fafc'
                             }}
                             itemStyle={{ color: '#f1f5f9' }}
@@ -160,11 +176,9 @@ export default function Dashboard() {
         );
     };
 
-    // 3. Tarjetas Interactivas rediseñadas
     const MetricList = ({ title, data = [], icon, isIncome, isActiveChart, onMakeActive }) => (
         <div className={`bg-white dark:bg-slate-900 p-2 md:p-3 rounded-xl shadow-sm flex flex-col h-full transition-all duration-300 ${isActiveChart ? (isIncome ? 'ring-2 ring-emerald-600 border-transparent shadow-md' : 'ring-2 ring-rose-600 border-transparent shadow-md') : 'border border-slate-300 dark:border-slate-700 hover:border-slate-400'}`}>
             
-            {/* Encabezado Clickeable para cambiar el gráfico */}
             <div 
                 onClick={onMakeActive}
                 className="flex items-center justify-between mb-2 cursor-pointer group/header"
@@ -262,7 +276,6 @@ export default function Dashboard() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
                     
-                    {/* COLUMNA INGRESOS */}
                     <div className="flex flex-col gap-2 bg-emerald-50/80 p-3 md:p-4 rounded-2xl border border-emerald-200 shadow-sm">
                         <div className="flex items-center gap-2 px-1 border-b border-emerald-100 pb-2">
                             <div className="bg-emerald-600 text-white p-1 rounded-md flex items-center justify-center shadow-sm">
@@ -271,7 +284,6 @@ export default function Dashboard() {
                             <h3 className="text-sm md:text-base font-black text-emerald-900 tracking-tight uppercase">Ingresos</h3>
                         </div>
 
-                        {/* El gráfico dinámico de ingresos */}
                         <DonutChart 
                             data={activeIncomeChart === 'cuenta' ? metrics.ingresosCuenta : metrics.ingresosMetodo} 
                             colors={INCOME_COLORS} 
@@ -297,7 +309,6 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    {/* COLUMNA EGRESOS */}
                     <div className="flex flex-col gap-2 bg-rose-50/80 p-3 md:p-4 rounded-2xl border border-rose-200 shadow-sm">
                         <div className="flex items-center gap-2 px-1 border-b border-rose-100 pb-2">
                             <div className="bg-rose-600 text-white p-1 rounded-md flex items-center justify-center shadow-sm">
@@ -306,7 +317,6 @@ export default function Dashboard() {
                             <h3 className="text-sm md:text-base font-black text-rose-900 tracking-tight uppercase">Egresos</h3>
                         </div>
 
-                        {/* El gráfico dinámico de egresos */}
                         <DonutChart 
                             data={activeExpenseChart === 'origen' ? metrics.egresosOrigen : metrics.egresosMetodo} 
                             colors={EXPENSE_COLORS} 
