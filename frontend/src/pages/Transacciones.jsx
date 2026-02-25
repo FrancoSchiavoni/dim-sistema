@@ -179,10 +179,21 @@ export default function Transacciones() {
     };
 
     const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
+    
     const formatDate = (dateStr) => {
         const date = new Date(dateStr);
         date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
         return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    };
+
+    // Función para formatear la fecha y hora de registro
+    const formatDateTime = (dateStr) => {
+        if (!dateStr) return '-';
+        const date = new Date(dateStr);
+        return date.toLocaleString('es-AR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
     };
 
     return (
@@ -292,7 +303,6 @@ export default function Transacciones() {
                     </button>
                 </div>
 
-                {/* CONTENEDOR PRINCIPAL: Tabla (Desktop) / Tarjetas (Móvil) */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
                     
                     {/* ===== VISTA MÓVIL (TARJETAS) ===== */}
@@ -306,10 +316,14 @@ export default function Transacciones() {
                         ) : (
                             paginatedData.map((mov) => (
                                 <div key={`${activeTab}-${mov.id}`} className="p-3.5 flex flex-col gap-2.5 hover:bg-slate-50 active:bg-slate-100 transition-colors">
-                                    {/* Cabecera Tarjeta: Fecha y Usuario */}
-                                    <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold tracking-wide uppercase">
-                                        <span>{formatDate(mov.fecha)}</span>
-                                        <div className="flex items-center gap-1">
+                                    {/* Cabecera Tarjeta: Fechas y Usuario */}
+                                    <div className="flex justify-between items-start text-[10px] text-slate-500 font-bold tracking-wide uppercase">
+                                        <div className="flex flex-col">
+                                            <span>{formatDate(mov.fecha)}</span>
+                                            {/* Aquí agregamos la fecha de registro en móvil */}
+                                            <span className="text-[9px] text-slate-400 font-medium normal-case mt-0.5">Reg: {formatDateTime(mov.fecha_registro)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 mt-0.5">
                                             <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[8px] font-black">
                                                 {mov.registrador ? mov.registrador.charAt(0) : '?'}
                                             </span>
@@ -317,7 +331,6 @@ export default function Transacciones() {
                                         </div>
                                     </div>
                                     
-                                    {/* Cuerpo Tarjeta: Detalle y Monto */}
                                     <div className="flex justify-between items-start gap-2">
                                         <span className="font-black text-slate-800 text-sm leading-tight flex-1">
                                             {mov.detalle}
@@ -327,7 +340,6 @@ export default function Transacciones() {
                                         </span>
                                     </div>
 
-                                    {/* Pie Tarjeta: Etiquetas y Acciones */}
                                     <div className="flex justify-between items-end mt-1">
                                         <div className="flex flex-wrap gap-1.5">
                                             {activeTab === 'ingresos' ? (
@@ -376,16 +388,18 @@ export default function Transacciones() {
                                         </>
                                     )}
                                     <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider text-right">Monto</th>
+                                    {/* Nueva columna para el Registro */}
+                                    <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Registro</th>
                                     <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider">Usuario</th>
                                     <th className="py-2.5 px-4 text-[11px] font-black text-slate-600 uppercase tracking-wider text-center w-24">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 text-sm">
                                 {loading ? (
-                                    <tr><td colSpan="7" className="text-center py-6 text-slate-500 text-sm font-medium">Cargando datos...</td></tr>
+                                    <tr><td colSpan="8" className="text-center py-6 text-slate-500 text-sm font-medium">Cargando datos...</td></tr>
                                 ) : paginatedData.length === 0 ? (
                                     <tr>
-                                        <td colSpan="7" className="text-center py-6 text-slate-500 text-sm bg-slate-50/50 font-medium">
+                                        <td colSpan="8" className="text-center py-6 text-slate-500 text-sm bg-slate-50/50 font-medium">
                                             {searchTerm ? 'No se encontraron resultados.' : `No hay ${activeTab}.`}
                                         </td>
                                     </tr>
@@ -413,6 +427,12 @@ export default function Transacciones() {
                                             <td className={`py-2 px-4 text-right font-black whitespace-nowrap ${activeTab === 'ingresos' ? 'text-emerald-700' : 'text-slate-900'}`}>
                                                 {activeTab === 'ingresos' ? '+' : '-'}{formatCurrency(mov.monto)}
                                             </td>
+                                            
+                                            {/* Nuevo campo de fecha de registro (letra más chica para no estorbar) */}
+                                            <td className="py-2 px-4 text-slate-400 font-medium text-[10px] whitespace-nowrap">
+                                                {formatDateTime(mov.fecha_registro)}
+                                            </td>
+                                            
                                             <td className="py-2 px-4 text-slate-600 font-bold text-[11px] whitespace-nowrap">
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[9px] uppercase border border-slate-300">
