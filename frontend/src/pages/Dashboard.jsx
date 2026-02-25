@@ -10,15 +10,19 @@ const formatDateObj = (date) => {
     return `${year}-${month}-${day}`;
 };
 
-// Paletas de colores ligeramente más profundas y serias
-const INCOME_COLORS = ['#059669', '#10b981', '#34d399', '#6ee7b7', '#065f46'];
-const EXPENSE_COLORS = ['#e11d48', '#f43f5e', '#fb7185', '#fda4af', '#9f1239'];
+// 1. Paletas de colores oscurecidas (Tonos más corporativos y profundos)
+const INCOME_COLORS = ['#047857', '#059669', '#0f766e', '#115e59', '#064e3b'];
+const EXPENSE_COLORS = ['#be123c', '#e11d48', '#9f1239', '#881337', '#7f1d1d'];
 
 export default function Dashboard() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState('mes');
     
+    // 2. NUEVO: Estados para controlar qué datos muestra el gráfico
+    const [activeIncomeChart, setActiveIncomeChart] = useState('cuenta'); // 'cuenta' | 'metodo'
+    const [activeExpenseChart, setActiveExpenseChart] = useState('origen'); // 'origen' | 'metodo'
+
     const [desde, setDesde] = useState(() => {
         const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
     });
@@ -96,19 +100,16 @@ export default function Dashboard() {
 
     const formatCurrency = (amount) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
 
-    // Componente de Gráfico con Porcentajes en Tooltip
+    // Componente de Gráfico con Tooltip oscuro y porcentaje
     const DonutChart = ({ data, colors }) => {
         if (!data || data.length === 0) return null;
         
-        // Calcular el total absoluto para sacar los porcentajes
         const grandTotal = data.reduce((acc, cur) => acc + Number(cur.total), 0);
-
         const chartData = data.map(item => ({
             name: item.label,
             value: Number(item.total)
         })).sort((a, b) => b.value - a.value);
 
-        // Formateador personalizado para el tooltip
         const tooltipFormatter = (value) => {
             const percent = grandTotal > 0 ? ((value / grandTotal) * 100).toFixed(1) : 0;
             return `${formatCurrency(value)} (${percent}%)`;
@@ -136,21 +137,22 @@ export default function Dashboard() {
                             formatter={tooltipFormatter}
                             contentStyle={{ 
                                 borderRadius: '8px', 
-                                border: '1px solid #cbd5e1', // Borde más definido (slate-300)
-                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', 
-                                fontSize: '11px', 
+                                border: '1px solid #94a3b8', // Borde más oscuro
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2)', 
+                                fontSize: '12px', 
                                 fontWeight: 'bold',
-                                backgroundColor: '#f8fafc' // Fondo ligeramente gris (slate-50)
+                                backgroundColor: '#1e293b', // Fondo casi negro para el tooltip
+                                color: '#f8fafc'
                             }}
-                            itemStyle={{ color: '#334155' }} // Texto oscuro (slate-700)
-                            labelStyle={{ color: '#475569', fontWeight: '600' }} // Título oscuro (slate-600)
+                            itemStyle={{ color: '#f1f5f9' }}
+                            labelStyle={{ color: '#cbd5e1', fontWeight: '600', marginBottom: '4px' }}
                         />
                         <Legend 
                             verticalAlign="middle" 
                             align="right"
                             layout="vertical"
                             iconType="circle"
-                            wrapperStyle={{ fontSize: '10px', fontWeight: '600', color: '#475569', lineHeight: '14px' }} // Texto leyenda más oscuro
+                            wrapperStyle={{ fontSize: '11px', fontWeight: '700', color: '#334155', lineHeight: '16px' }}
                         />
                     </PieChart>
                 </ResponsiveContainer>
@@ -158,41 +160,45 @@ export default function Dashboard() {
         );
     };
 
-    // Listas Compactas con colores más serios
-    const MetricList = ({ title, data = [], icon, isIncome }) => (
-        // Cambio de fondo a slate-50 y borde más oscuro slate-200
-        <div className="bg-slate-50 dark:bg-slate-900 p-2 md:p-3 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col h-full hover:shadow-md transition-shadow group">
-            <div className="flex items-center gap-1.5 mb-2">
-                {/* Fondos de iconos más saturados */}
-                <div className={`p-1 rounded-md transition-colors ${isIncome ? 'bg-emerald-100 text-emerald-700 group-hover:bg-emerald-200' : 'bg-rose-100 text-rose-700 group-hover:bg-rose-200'}`}>
-                    <span className="material-symbols-outlined text-[16px]">{icon}</span>
+    // 3. Tarjetas Interactivas rediseñadas
+    const MetricList = ({ title, data = [], icon, isIncome, isActiveChart, onMakeActive }) => (
+        <div className={`bg-white dark:bg-slate-900 p-2 md:p-3 rounded-xl shadow-sm flex flex-col h-full transition-all duration-300 ${isActiveChart ? (isIncome ? 'ring-2 ring-emerald-600 border-transparent shadow-md' : 'ring-2 ring-rose-600 border-transparent shadow-md') : 'border border-slate-300 dark:border-slate-700 hover:border-slate-400'}`}>
+            
+            {/* Encabezado Clickeable para cambiar el gráfico */}
+            <div 
+                onClick={onMakeActive}
+                className="flex items-center justify-between mb-2 cursor-pointer group/header"
+                title="Hacer clic para ver en el gráfico"
+            >
+                <div className="flex items-center gap-2">
+                    <div className={`p-1 rounded-md transition-colors ${isActiveChart ? (isIncome ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white') : (isIncome ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800')}`}>
+                        <span className="material-symbols-outlined text-[16px]">{icon}</span>
+                    </div>
+                    <h4 className={`text-xs font-extrabold transition-colors ${isActiveChart ? 'text-slate-900' : 'text-slate-600 group-hover/header:text-slate-900'}`}>{title}</h4>
                 </div>
-                {/* Título más oscuro */}
-                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">{title}</h4>
+                {!isActiveChart && (
+                    <span className="material-symbols-outlined text-[14px] text-slate-300 group-hover/header:text-slate-500 transition-colors">pie_chart</span>
+                )}
             </div>
             
             <div className="overflow-y-auto overflow-x-hidden max-h-[110px] xl:max-h-[130px] flex-1 scrollbar-thin scrollbar-thumb-slate-300 pr-1">
                 {loading ? (
-                    <p className="text-[10px] text-slate-600 py-2 text-center">Cargando...</p>
+                    <p className="text-[10px] text-slate-500 py-2 text-center font-medium">Cargando...</p>
                 ) : data.length === 0 ? (
-                    // Fondo de estado vacío más oscuro
-                    <p className="text-[10px] text-slate-600 bg-slate-100 rounded-md p-1.5 text-center mt-1">
+                    <p className="text-[10px] text-slate-500 bg-slate-100 rounded-md p-1.5 text-center mt-1 font-medium border border-slate-200">
                         Sin movimientos
                     </p>
                 ) : (
                     <div className="space-y-0.5">
                         {data.map((item, index) => (
-                            // Bordes de separación más oscuros (slate-200) y hover más notorio (slate-100)
                             <div 
                                 key={index} 
                                 onClick={() => handleRowClick(item.label, isIncome)}
-                                className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 py-1 px-1.5 last:border-0 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
-                                title="Ver detalle"
+                                className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 py-1.5 px-1.5 last:border-0 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+                                title="Ver en transacciones"
                             >
-                                {/* Texto de items más oscuro */}
-                                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate pr-2">{item.label}</span>
-                                {/* Montos con colores más profundos */}
-                                <span className={`font-bold text-[11px] whitespace-nowrap ${isIncome ? 'text-emerald-700' : 'text-slate-900 dark:text-white'}`}>
+                                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate pr-2">{item.label}</span>
+                                <span className={`font-black text-[11px] whitespace-nowrap ${isIncome ? 'text-emerald-700' : 'text-slate-900 dark:text-white'}`}>
                                     {formatCurrency(item.total)}
                                 </span>
                             </div>
@@ -201,9 +207,8 @@ export default function Dashboard() {
                 )}
             </div>
             
-            {/* Borde superior del total más oscuro */}
-            <div className="pt-1.5 mt-1.5 flex justify-between items-center border-t border-slate-200 dark:border-slate-700 px-1.5">
-                <span className="text-[11px] font-extrabold text-slate-700 dark:text-slate-300">Total:</span>
+            <div className="pt-2 mt-1.5 flex justify-between items-center border-t-2 border-slate-200 dark:border-slate-700 px-1.5">
+                <span className="text-[11px] font-black text-slate-800 dark:text-slate-300 uppercase tracking-wide">Total:</span>
                 <span className={`font-black text-xs ${isIncome ? 'text-emerald-700' : 'text-rose-700'}`}>
                     {formatCurrency(data.reduce((acc, cur) => acc + Number(cur.total), 0))}
                 </span>
@@ -212,33 +217,30 @@ export default function Dashboard() {
     );
 
     return (
-        // Fondo principal un poco más denso si se usa tailwind default (slate-100 en vez de 50)
         <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-background-dark p-3 md:p-4 lg:p-5">
             <div className="max-w-7xl mx-auto space-y-3 md:space-y-4">
                 
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                     <div>
-                        {/* Título principal más oscuro */}
-                        <h2 className="text-lg md:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Panel Resumen</h2>
+                        <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight">Panel Resumen</h2>
                     </div>
                     
                     <button 
                         onClick={() => navigate('/movimientos')} 
-                        className="w-full md:w-auto bg-primary hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95"
+                        className="w-full md:w-auto bg-primary hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 shadow-md transition-all hover:-translate-y-0.5 active:scale-95"
                     >
                         <span className="material-symbols-outlined text-[16px]">add_circle</span>
                         <span>Nueva Transacción</span>
                     </button>
                 </div>
 
-                {/* Contenedor de Filtros con bordes más definidos */}
-                <div className="bg-white dark:bg-slate-900 p-1.5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-3">
-                    <div className="flex flex-wrap w-full md:w-auto bg-slate-100 p-1 rounded-lg">
+                <div className="bg-white dark:bg-slate-900 p-1.5 rounded-xl shadow-sm border border-slate-300 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-3">
+                    <div className="flex flex-wrap w-full md:w-auto bg-slate-100 p-1 rounded-lg border border-slate-200">
                         {['hoy', 'semana', 'mes', 'todo'].map((filter) => (
                             <button 
                                 key={filter}
                                 onClick={() => handleQuickFilter(filter)}
-                                className={`flex-1 md:flex-none px-3 py-1 rounded-md text-[11px] md:text-xs font-bold capitalize transition-all ${activeFilter === filter ? 'bg-white shadow-sm text-primary ring-1 ring-slate-200' : 'text-slate-600 hover:text-slate-800 hover:bg-slate-50'}`}
+                                className={`flex-1 md:flex-none px-3 py-1.5 rounded-md text-[11px] md:text-xs font-extrabold capitalize transition-all ${activeFilter === filter ? 'bg-white shadow-sm text-primary ring-1 ring-slate-300' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'}`}
                             >
                                 {filter === 'hoy' ? 'Hoy' : filter === 'semana' ? 'Esta Semana' : filter === 'mes' ? 'Este Mes' : 'Todo'}
                             </button>
@@ -247,50 +249,86 @@ export default function Dashboard() {
 
                     <div className="flex items-center gap-2 w-full md:w-auto px-1">
                         <div className="flex items-center gap-1.5 w-full sm:w-auto">
-                            <span className="text-[10px] text-slate-500 font-bold uppercase">Desde</span>
-                            <input type="date" value={desde} onChange={(e) => handleCustomDateChange(setDesde, e.target.value)} className="px-2 py-1 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-primary/50 bg-white text-slate-700 font-medium" />
+                            <span className="text-[10px] text-slate-500 font-black uppercase">Desde</span>
+                            <input type="date" value={desde} onChange={(e) => handleCustomDateChange(setDesde, e.target.value)} className="px-2 py-1 border border-slate-300 rounded-md text-xs font-bold focus:ring-2 focus:ring-primary/50 bg-white text-slate-800 shadow-sm" />
                         </div>
-                        <div className="hidden sm:block text-slate-400 text-xs">-</div>
+                        <div className="hidden sm:block text-slate-400 text-xs font-bold">-</div>
                         <div className="flex items-center gap-1.5 w-full sm:w-auto">
-                            <span className="text-[10px] text-slate-500 font-bold uppercase">Hasta</span>
-                            <input type="date" value={hasta} onChange={(e) => handleCustomDateChange(setHasta, e.target.value)} className="px-2 py-1 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-primary/50 bg-white text-slate-700 font-medium" />
+                            <span className="text-[10px] text-slate-500 font-black uppercase">Hasta</span>
+                            <input type="date" value={hasta} onChange={(e) => handleCustomDateChange(setHasta, e.target.value)} className="px-2 py-1 border border-slate-300 rounded-md text-xs font-bold focus:ring-2 focus:ring-primary/50 bg-white text-slate-800 shadow-sm" />
                         </div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
                     
-                    {/* COLUMNA INGRESOS - Colores más serios */}
-                    <div className="flex flex-col gap-2 bg-emerald-100/40 p-3 md:p-4 rounded-2xl border border-emerald-200/60">
-                        <div className="flex items-center gap-2 px-1">
-                            <div className="bg-emerald-200 text-emerald-800 p-1 rounded-md flex items-center justify-center">
+                    {/* COLUMNA INGRESOS */}
+                    <div className="flex flex-col gap-2 bg-emerald-50/80 p-3 md:p-4 rounded-2xl border border-emerald-200 shadow-sm">
+                        <div className="flex items-center gap-2 px-1 border-b border-emerald-100 pb-2">
+                            <div className="bg-emerald-600 text-white p-1 rounded-md flex items-center justify-center shadow-sm">
                                 <span className="material-symbols-outlined text-[16px]">arrow_downward</span>
                             </div>
-                            <h3 className="text-sm md:text-base font-extrabold text-emerald-900 tracking-tight">Ingresos Generados</h3>
+                            <h3 className="text-sm md:text-base font-black text-emerald-900 tracking-tight uppercase">Ingresos</h3>
                         </div>
 
-                        <DonutChart data={metrics.ingresosCuenta} colors={INCOME_COLORS} />
+                        {/* El gráfico dinámico de ingresos */}
+                        <DonutChart 
+                            data={activeIncomeChart === 'cuenta' ? metrics.ingresosCuenta : metrics.ingresosMetodo} 
+                            colors={INCOME_COLORS} 
+                        />
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
-                            <MetricList title="Ingresos por Cuenta" data={metrics.ingresosCuenta} icon="account_balance" isIncome={true} />
-                            <MetricList title="Ingresos por Forma de Pago" data={metrics.ingresosMetodo} icon="payments" isIncome={true} />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                            <MetricList 
+                                title="Por Cuenta" 
+                                data={metrics.ingresosCuenta} 
+                                icon="account_balance" 
+                                isIncome={true} 
+                                isActiveChart={activeIncomeChart === 'cuenta'}
+                                onMakeActive={() => setActiveIncomeChart('cuenta')}
+                            />
+                            <MetricList 
+                                title="Por Forma de Pago" 
+                                data={metrics.ingresosMetodo} 
+                                icon="payments" 
+                                isIncome={true} 
+                                isActiveChart={activeIncomeChart === 'metodo'}
+                                onMakeActive={() => setActiveIncomeChart('metodo')}
+                            />
                         </div>
                     </div>
 
-                    {/* COLUMNA EGRESOS - Colores más serios */}
-                    <div className="flex flex-col gap-2 bg-rose-100/40 p-3 md:p-4 rounded-2xl border border-rose-200/60">
-                        <div className="flex items-center gap-2 px-1">
-                            <div className="bg-rose-200 text-rose-800 p-1 rounded-md flex items-center justify-center">
+                    {/* COLUMNA EGRESOS */}
+                    <div className="flex flex-col gap-2 bg-rose-50/80 p-3 md:p-4 rounded-2xl border border-rose-200 shadow-sm">
+                        <div className="flex items-center gap-2 px-1 border-b border-rose-100 pb-2">
+                            <div className="bg-rose-600 text-white p-1 rounded-md flex items-center justify-center shadow-sm">
                                 <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
                             </div>
-                            <h3 className="text-sm md:text-base font-extrabold text-rose-900 tracking-tight">Egresos y Gastos</h3>
+                            <h3 className="text-sm md:text-base font-black text-rose-900 tracking-tight uppercase">Egresos</h3>
                         </div>
 
-                        <DonutChart data={metrics.egresosOrigen} colors={EXPENSE_COLORS} />
+                        {/* El gráfico dinámico de egresos */}
+                        <DonutChart 
+                            data={activeExpenseChart === 'origen' ? metrics.egresosOrigen : metrics.egresosMetodo} 
+                            colors={EXPENSE_COLORS} 
+                        />
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
-                            <MetricList title="Egresos por Categoría" data={metrics.egresosOrigen} icon="category" isIncome={false} />
-                            <MetricList title="Egresos por Forma de Pago" data={metrics.egresosMetodo} icon="credit_card" isIncome={false} />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+                            <MetricList 
+                                title="Por Categoría" 
+                                data={metrics.egresosOrigen} 
+                                icon="category" 
+                                isIncome={false} 
+                                isActiveChart={activeExpenseChart === 'origen'}
+                                onMakeActive={() => setActiveExpenseChart('origen')}
+                            />
+                            <MetricList 
+                                title="Por Forma de Pago" 
+                                data={metrics.egresosMetodo} 
+                                icon="credit_card" 
+                                isIncome={false} 
+                                isActiveChart={activeExpenseChart === 'metodo'}
+                                onMakeActive={() => setActiveExpenseChart('metodo')}
+                            />
                         </div>
                     </div>
 
