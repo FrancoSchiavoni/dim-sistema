@@ -115,9 +115,11 @@ export default function Movimientos() {
         <div className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-5 bg-slate-100 dark:bg-background-dark relative">
             
             <div className="max-w-4xl mx-auto flex flex-col gap-4">
-                
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg md:text-xl font-black text-slate-900 tracking-tight">Nuevo Movimiento</h2>
+                      
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                    <div>
+                        <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight">Nuevo Movimiento</h2>
+                    </div>
                 </div>
 
                 <div className={`bg-white rounded-2xl shadow-sm border p-4 md:p-6 lg:p-8 transition-all duration-300 ${tipo === 'ingreso' ? 'border-emerald-200' : 'border-rose-200'}`}>

@@ -238,14 +238,6 @@ export default function Dashboard() {
                     <div>
                         <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight">Panel Resumen</h2>
                     </div>
-                    
-                    <button 
-                        onClick={() => navigate('/movimientos')} 
-                        className="w-full md:w-auto bg-primary hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 shadow-md transition-all hover:-translate-y-0.5 active:scale-95"
-                    >
-                        <span className="material-symbols-outlined text-[16px]">add_circle</span>
-                        <span>Nueva Transacción</span>
-                    </button>
                 </div>
 
                 <div className="bg-white dark:bg-slate-900 p-1.5 rounded-xl shadow-sm border border-slate-300 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-3">
