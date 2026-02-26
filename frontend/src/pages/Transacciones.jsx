@@ -517,12 +517,6 @@ export default function Transacciones() {
                 </div>
             </div>
 
-            <MovimientoModal
-                isOpen={isModalOpen}
-                onClose={() => { setIsModalOpen(false); setMovimientoAEditar(null); }}
-                onSaved={fetchMovimientos}
-                movimientoAEditar={movimientoAEditar}
-            />
         </div>
     );
 }
