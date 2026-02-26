@@ -11,7 +11,28 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middlewares globales
-app.use(cors());
+// Definimos los dominios de confianza
+const allowedOrigins = [
+    'http://localhost:5173', // Frontend en desarrollo local (Vite)
+    process.env.FRONTEND_URL // Frontend en producción (Railway)
+].filter(Boolean); // filter(Boolean) elimina valores undefined si la variable de entorno no está seteada
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Permitimos peticiones sin origin (como Postman en desarrollo o conexiones server-to-server)
+        // O si el origen exacto está dentro de nuestra lista permitida
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Bloqueado por política CORS'));
+        }
+    },
+    credentials: true, // Necesario si en el futuro envías cookies o ciertos headers de autorización
+    optionsSuccessStatus: 200
+};
+
+// Aplicamos el middleware globalmente
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Rutas Públicas
