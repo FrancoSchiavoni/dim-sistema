@@ -21,8 +21,8 @@ export default function Layout({ children }) {
     return (
         <div className="bg-background-light dark:bg-background-dark min-h-screen flex font-display text-slate-900 dark:text-slate-100 antialiased overflow-hidden">
             {/* Sidebar (Desktop) */}
-            <aside className="hidden lg:flex flex-col w-64 h-screen bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 sticky top-0 overflow-y-auto">
-                <div className="p-6">
+            <aside className="hidden lg:flex flex-col w-56 h-screen bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 sticky top-0 overflow-y-auto">
+                <div className="p-5">
                     <div className="flex items-center gap-3 mb-8">
                         <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white shadow-lg shadow-primary/30">
                             <span className="material-symbols-outlined text-2xl">account_balance_wallet</span>
