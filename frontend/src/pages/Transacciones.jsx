@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
-import MovimientoModal from '../components/MovimientoModal';
 import toast from 'react-hot-toast';
 
 const formatDateObj = (date) => {
