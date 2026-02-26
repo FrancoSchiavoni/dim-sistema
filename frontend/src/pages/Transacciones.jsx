@@ -276,14 +276,6 @@ export default function Transacciones() {
                     <div>
                         <h2 className="text-lg md:text-xl font-black text-slate-900 tracking-tight">Historial de Transacciones</h2>
                     </div>
-                    
-                    <button 
-                        onClick={() => navigate('/movimientos')} 
-                        className="w-full md:w-auto bg-primary hover:bg-blue-700 text-white px-4 py-2 md:py-1.5 rounded-lg text-xs md:text-sm font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all hover:-translate-y-0.5 active:scale-95"
-                    >
-                        <span className="material-symbols-outlined text-[16px] md:text-[18px]">add_circle</span>
-                        <span>Nueva Transacción</span>
-                    </button>
                 </div>
 
                 <div className="bg-white dark:bg-slate-900 p-2 rounded-xl shadow-sm border border-slate-200 flex flex-col xl:flex-row items-center justify-between gap-3">

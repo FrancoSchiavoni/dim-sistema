@@ -24,14 +24,19 @@ export default function Movimientos() {
     const [origenId, setOrigenId] = useState('');
     const [metodoPagoId, setMetodoPagoId] = useState('');
 
+    // Carga inicial de catálogos y Autofocus
     useEffect(() => {
         api.get('/transacciones/catalogos')
             .then(data => setCatalogos(data))
             .catch(err => toast.error('Error cargando catálogos'));
+            
+        // Autofocus al entrar a la página
+        if (importeRef.current) {
+            importeRef.current.focus();
+        }
     }, []);
 
     const resetForm = () => {
-        // Eliminamos setTipo('ingreso') para que recuerde la última pestaña seleccionada
         setImporte(''); 
         setFecha(getTodayDate());
         setCliente(''); 
@@ -39,6 +44,13 @@ export default function Movimientos() {
         setDetalle(''); 
         setOrigenId(''); 
         setMetodoPagoId('');
+        
+        // Devolver el foco al importe después de limpiar el formulario
+        setTimeout(() => {
+            if (importeRef.current) {
+                importeRef.current.focus();
+            }
+        }, 10);
     };
 
     const parseCurrencyToNumber = (str) => {
@@ -72,6 +84,10 @@ export default function Movimientos() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Bloqueo de doble envío
+        if (loading) return;
+        
         setLoading(true);
 
         const payload = {
@@ -83,10 +99,12 @@ export default function Movimientos() {
         try {
             await api.post('/transacciones', payload);
             toast.success('¡Registro exitoso!');
-            resetForm(); // Limpiará los campos, pero se quedará en el mismo tipo
+            resetForm(); 
         } catch (error) {
             toast.error('Error al guardar: ' + error.message);
-        } finally { setLoading(false); }
+        } finally { 
+            setLoading(false); 
+        }
     };
 
     // Clases CSS compartidas para los inputs para mantener consistencia
@@ -199,12 +217,12 @@ export default function Movimientos() {
 
                         <div className="pt-5 mt-2 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-end gap-3">
                             <button type="button" onClick={resetForm} disabled={loading}
-                                className="w-full sm:w-auto px-6 py-2.5 rounded-lg border border-slate-300 text-slate-700 font-bold text-xs md:text-sm hover:bg-slate-50 transition-all active:scale-95">
+                                className="w-full sm:w-auto px-6 py-2.5 rounded-lg border border-slate-300 text-slate-700 font-bold text-xs md:text-sm hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-50">
                                 Limpiar Campos
                             </button>
                             <button type="submit" disabled={loading}
-                                className={`w-full sm:w-auto px-8 py-2.5 rounded-lg text-white font-bold text-xs md:text-sm flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 transition-all hover:-translate-y-0.5 active:scale-95 ${tipo === 'ingreso' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}`}>
-                                <span className="material-symbols-outlined text-[18px]">{loading ? 'sync' : 'check'}</span>
+                                className={`w-full sm:w-auto px-8 py-2.5 rounded-lg text-white font-bold text-xs md:text-sm flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:-translate-y-0.5 active:scale-95 ${tipo === 'ingreso' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}`}>
+                                <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>{loading ? 'sync' : 'check'}</span>
                                 <span>{loading ? 'Guardando...' : 'Confirmar Registro'}</span>
                             </button>
                         </div>
